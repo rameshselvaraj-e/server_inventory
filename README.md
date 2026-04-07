@@ -1,4 +1,4 @@
-# InfraVault — Server Inventory Management System
+# Infrastructure — Server Inventory Management System
 
 A full-stack CRUD web application for managing server infrastructure inventory.
 Built with Python Flask, MySQL, HTML/CSS (dark industrial theme).
