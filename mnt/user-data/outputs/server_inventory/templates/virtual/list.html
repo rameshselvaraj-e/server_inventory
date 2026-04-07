@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Virtual Inventory{% endblock %}
+{% block page_title %}Virtual Inventory{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('virtual_add') }}" class="btn-add">+ Add VM</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search VM name, host, IP, owner..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="running"   {% if status=='running' %}selected{% endif %}>Running</option>
+      <option value="stopped"   {% if status=='stopped' %}selected{% endif %}>Stopped</option>
+      <option value="suspended" {% if status=='suspended' %}selected{% endif %}>Suspended</option>
+      <option value="deleted"   {% if status=='deleted' %}selected{% endif %}>Deleted</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('virtual_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>VM Name</th><th>Host Server</th><th>Hypervisor</th>
+        <th>vCPU / RAM</th><th>Storage</th><th>IP Address</th>
+        <th>Environment</th><th>Owner</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.vm_name }}</td>
+        <td class="mono">{{ r.host_server or '—' }}</td>
+        <td>{{ r.hypervisor or '—' }}</td>
+        <td>{{ r.vcpu or '?' }}vCPU / {{ r.ram_gb or '?' }}GB</td>
+        <td>{{ r.storage_gb or '?' }} GB</td>
+        <td class="mono">{{ r.ip_address or '—' }}</td>
+        <td><span class="badge badge-env-{{ r.environment }}">{{ r.environment }}</span></td>
+        <td>{{ r.owner or '—' }}</td>
+        <td><span class="badge badge-vm-{{ r.status }}">{{ r.status }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('virtual_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('virtual_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="11" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

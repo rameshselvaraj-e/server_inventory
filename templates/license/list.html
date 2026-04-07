@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}License Inventory{% endblock %}
+{% block page_title %}License Inventory{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('license_add') }}" class="btn-add">+ Add License</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search software, vendor, assigned to..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"          {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="expired"         {% if status=='expired' %}selected{% endif %}>Expired</option>
+      <option value="pending_renewal" {% if status=='pending_renewal' %}selected{% endif %}>Pending Renewal</option>
+      <option value="cancelled"       {% if status=='cancelled' %}selected{% endif %}>Cancelled</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('license_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Software</th><th>Vendor</th><th>Type</th>
+        <th>Qty / Used</th><th>Purchase</th><th>Expiry</th>
+        <th>Cost</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.software_name }}</td>
+        <td>{{ r.vendor or '—' }}</td>
+        <td>{{ r.license_type or '—' }}</td>
+        <td>{{ r.used_count or 0 }} / {{ r.quantity or 1 }}</td>
+        <td>{{ r.purchase_date or '—' }}</td>
+        <td class="{{ 'text-warn' if r.expiry_date and r.expiry_date.strftime('%Y-%m-%d') < '2024-12-31' else '' }}">
+          {{ r.expiry_date or '∞' }}
+        </td>
+        <td>${{ '{:,.2f}'.format(r.cost) if r.cost else '—' }}</td>
+        <td><span class="badge badge-lic-{{ r.status }}">{{ r.status.replace('_',' ').title() }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('license_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('license_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="10" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

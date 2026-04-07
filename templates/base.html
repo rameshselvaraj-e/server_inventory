@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Server Inventory{% endblock %} | InfraVault</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">⬡</span>
+      <span class="brand-text">InfraVault</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+        <span class="nav-icon">◈</span> Dashboard
+      </a>
+      <div class="nav-section">INVENTORY</div>
+      <a href="{{ url_for('physical_list') }}" class="nav-item {% if 'physical' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">▣</span> Physical
+      </a>
+      <a href="{{ url_for('virtual_list') }}" class="nav-item {% if 'virtual' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">◫</span> Virtual
+      </a>
+      <div class="nav-section">COMPLIANCE</div>
+      <a href="{{ url_for('license_list') }}" class="nav-item {% if 'license' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">◉</span> Licenses
+      </a>
+      <a href="{{ url_for('warranty_list') }}" class="nav-item {% if 'warranty' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">◎</span> Warranty
+      </a>
+      <div class="nav-section">PARTNERS</div>
+      <a href="{{ url_for('vendor_list') }}" class="nav-item {% if 'vendor' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">◐</span> Vendors
+      </a>
+    </nav>
+    <div class="sidebar-footer">InfraVault v1.0</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+      <div class="topbar-right">
+        {% block topbar_action %}{% endblock %}
+      </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrapper">
+          {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

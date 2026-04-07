@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Vendor Info{% endblock %}
+{% block page_title %}Vendor Info{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('vendor_add') }}" class="btn-add">+ Add Vendor</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search vendor name, category, contact..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"      {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"    {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="blacklisted" {% if status=='blacklisted' %}selected{% endif %}>Blacklisted</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('vendor_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Vendor</th><th>Category</th><th>Contact</th>
+        <th>Email</th><th>Phone</th><th>Account Manager</th>
+        <th>Contract End</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td><strong>{{ r.vendor_name }}</strong></td>
+        <td><span class="badge badge-cat-{{ r.category }}">{{ r.category or '—' }}</span></td>
+        <td>{{ r.contact_name or '—' }}</td>
+        <td><a href="mailto:{{ r.contact_email }}" class="link">{{ r.contact_email or '—' }}</a></td>
+        <td>{{ r.contact_phone or '—' }}</td>
+        <td>{{ r.account_manager or '—' }}</td>
+        <td>{{ r.contract_end or '—' }}</td>
+        <td><span class="badge badge-vend-{{ r.status }}">{{ r.status.title() }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('vendor_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('vendor_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="10" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

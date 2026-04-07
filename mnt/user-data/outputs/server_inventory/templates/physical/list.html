@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Physical Inventory{% endblock %}
+{% block page_title %}Physical Inventory{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('physical_add') }}" class="btn-add">+ Add Server</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search hostname, IP, asset tag..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('physical_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Hostname</th><th>Asset Tag</th><th>Type</th>
+        <th>Manufacturer / Model</th><th>CPU / RAM</th><th>IP Address</th>
+        <th>Datacenter</th><th>OS</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.hostname }}</td>
+        <td class="mono">{{ r.asset_tag or '—' }}</td>
+        <td>{{ r.server_type or '—' }}</td>
+        <td>{{ r.manufacturer }} {{ r.model }}</td>
+        <td>{{ r.cpu_cores or '?' }}C / {{ r.ram_gb or '?' }}GB</td>
+        <td class="mono">{{ r.ip_address or '—' }}</td>
+        <td>{{ r.datacenter or '—' }}</td>
+        <td>{{ r.os or '—' }}</td>
+        <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('physical_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('physical_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="11" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

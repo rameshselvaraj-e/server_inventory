@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Physical Server{% endblock %}
+{% block page_title %}{{ action }} Physical Server{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <form method="post">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Hostname *</label>
+        <input type="text" name="hostname" value="{{ row.hostname if row else '' }}" required class="form-input" placeholder="srv-prod-001"/>
+      </div>
+
+      <div class="form-group">
+        <label>Asset Tag</label>
+        <input type="text" name="asset_tag" value="{{ row.asset_tag if row else '' }}" class="form-input" placeholder="ASSET-001"/>
+      </div>
+
+      <div class="form-group">
+        <label>Server Type</label>
+        <select name="server_type" class="form-select">
+          {% for t in ['rack','tower','blade','other'] %}
+            <option value="{{ t }}" {% if row and row.server_type==t %}selected{% endif %}>{{ t.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Manufacturer</label>
+        <input type="text" name="manufacturer" value="{{ row.manufacturer if row else '' }}" class="form-input" placeholder="Dell, HPE, Lenovo..."/>
+      </div>
+
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" name="model" value="{{ row.model if row else '' }}" class="form-input" placeholder="PowerEdge R740"/>
+      </div>
+
+      <div class="form-group">
+        <label>Serial Number</label>
+        <input type="text" name="serial_number" value="{{ row.serial_number if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>CPU</label>
+        <input type="text" name="cpu" value="{{ row.cpu if row else '' }}" class="form-input" placeholder="Intel Xeon Gold 6248R"/>
+      </div>
+
+      <div class="form-group">
+        <label>CPU Cores</label>
+        <input type="number" name="cpu_cores" value="{{ row.cpu_cores if row else '' }}" class="form-input" placeholder="48"/>
+      </div>
+
+      <div class="form-group">
+        <label>RAM (GB)</label>
+        <input type="number" name="ram_gb" value="{{ row.ram_gb if row else '' }}" class="form-input" placeholder="256"/>
+      </div>
+
+      <div class="form-group">
+        <label>Storage</label>
+        <input type="text" name="storage" value="{{ row.storage if row else '' }}" class="form-input" placeholder="4x 1.8TB SAS RAID10"/>
+      </div>
+
+      <div class="form-group">
+        <label>Datacenter</label>
+        <input type="text" name="datacenter" value="{{ row.datacenter if row else '' }}" class="form-input" placeholder="DC-East"/>
+      </div>
+
+      <div class="form-group">
+        <label>Rack Location</label>
+        <input type="text" name="rack_location" value="{{ row.rack_location if row else '' }}" class="form-input" placeholder="R12-U04"/>
+      </div>
+
+      <div class="form-group">
+        <label>IP Address</label>
+        <input type="text" name="ip_address" value="{{ row.ip_address if row else '' }}" class="form-input" placeholder="10.10.1.10"/>
+      </div>
+
+      <div class="form-group">
+        <label>Operating System</label>
+        <input type="text" name="os" value="{{ row.os if row else '' }}" class="form-input" placeholder="RHEL 8.6"/>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['active','inactive','maintenance','decommissioned'] %}
+            <option value="{{ s }}" {% if row and row.status==s %}selected{% elif not row and s=='active' %}selected{% endif %}>{{ s.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Purchase Date</label>
+        <input type="date" name="purchase_date" value="{{ row.purchase_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea name="notes" class="form-textarea" rows="3">{{ row.notes if row else '' }}</textarea>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} Server</button>
+      <a href="{{ url_for('physical_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

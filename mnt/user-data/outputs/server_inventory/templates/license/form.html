@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} License{% endblock %}
+{% block page_title %}{{ action }} License{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <form method="post">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Software Name *</label>
+        <input type="text" name="software_name" value="{{ row.software_name if row else '' }}" required class="form-input" placeholder="VMware vSphere Enterprise Plus"/>
+      </div>
+
+      <div class="form-group">
+        <label>Vendor</label>
+        <input type="text" name="vendor" value="{{ row.vendor if row else '' }}" class="form-input" placeholder="VMware"/>
+      </div>
+
+      <div class="form-group">
+        <label>License Type</label>
+        <input type="text" name="license_type" value="{{ row.license_type if row else '' }}" class="form-input" placeholder="per-cpu subscription, perpetual, per-seat..."/>
+      </div>
+
+      <div class="form-group">
+        <label>License Key</label>
+        <input type="text" name="license_key" value="{{ row.license_key if row else '' }}" class="form-input" placeholder="XXXXX-XXXXX-XXXXX"/>
+      </div>
+
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" value="{{ row.quantity if row else 1 }}" class="form-input" min="1"/>
+      </div>
+
+      <div class="form-group">
+        <label>Used Count</label>
+        <input type="number" name="used_count" value="{{ row.used_count if row else 0 }}" class="form-input" min="0"/>
+      </div>
+
+      <div class="form-group">
+        <label>Assigned To</label>
+        <input type="text" name="assigned_to" value="{{ row.assigned_to if row else '' }}" class="form-input" placeholder="Teams or servers"/>
+      </div>
+
+      <div class="form-group">
+        <label>Purchase Date</label>
+        <input type="date" name="purchase_date" value="{{ row.purchase_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Expiry Date</label>
+        <input type="date" name="expiry_date" value="{{ row.expiry_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Cost ($)</label>
+        <input type="number" name="cost" step="0.01" value="{{ row.cost if row else '' }}" class="form-input" placeholder="45000.00"/>
+      </div>
+
+      <div class="form-group">
+        <label>Support Contact</label>
+        <input type="text" name="support_contact" value="{{ row.support_contact if row else '' }}" class="form-input" placeholder="Phone or email"/>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['active','expired','pending_renewal','cancelled'] %}
+            <option value="{{ s }}" {% if row and row.status==s %}selected{% elif not row and s=='active' %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea name="notes" class="form-textarea" rows="3">{{ row.notes if row else '' }}</textarea>
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} License</button>
+      <a href="{{ url_for('license_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+  <a href="{{ url_for('physical_list') }}" class="stat-card card-blue">
+    <div class="stat-icon">▣</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.physical }}</div>
+      <div class="stat-label">Physical Servers</div>
+      <div class="stat-sub">{{ stats.physical_active }} active</div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('virtual_list') }}" class="stat-card card-green">
+    <div class="stat-icon">◫</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.virtual }}</div>
+      <div class="stat-label">Virtual Machines</div>
+      <div class="stat-sub">{{ stats.vm_running }} running</div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('license_list') }}" class="stat-card card-yellow">
+    <div class="stat-icon">◉</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.license }}</div>
+      <div class="stat-label">Licenses</div>
+      <div class="stat-sub {{ 'alert-text' if stats.license_expiring > 0 else '' }}">
+        {{ stats.license_expiring }} expiring soon
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('warranty_list') }}" class="stat-card card-red">
+    <div class="stat-icon">◎</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.warranty }}</div>
+      <div class="stat-label">Warranty Records</div>
+      <div class="stat-sub {{ 'alert-text' if stats.warranty_expired > 0 else '' }}">
+        {{ stats.warranty_expired }} expired
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('vendor_list') }}" class="stat-card card-purple">
+    <div class="stat-icon">◐</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.vendor }}</div>
+      <div class="stat-label">Vendors</div>
+      <div class="stat-sub">managed partners</div>
+    </div>
+  </a>
+
+</div>
+
+<div class="quick-links">
+  <h3 class="section-title">Quick Actions</h3>
+  <div class="quick-grid">
+    <a href="{{ url_for('physical_add') }}" class="quick-btn">+ Add Physical Server</a>
+    <a href="{{ url_for('virtual_add') }}" class="quick-btn">+ Add Virtual Machine</a>
+    <a href="{{ url_for('license_add') }}" class="quick-btn">+ Add License</a>
+    <a href="{{ url_for('warranty_add') }}" class="quick-btn">+ Add Warranty</a>
+    <a href="{{ url_for('vendor_add') }}" class="quick-btn">+ Add Vendor</a>
+  </div>
+</div>
+{% endblock %}

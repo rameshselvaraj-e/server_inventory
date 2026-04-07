@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Warranty{% endblock %}
+{% block page_title %}{{ action }} Warranty Record{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <form method="post">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Device Name *</label>
+        <input type="text" name="device_name" value="{{ row.device_name if row else '' }}" required class="form-input" placeholder="srv-prod-001"/>
+      </div>
+
+      <div class="form-group">
+        <label>Asset Tag</label>
+        <input type="text" name="asset_tag" value="{{ row.asset_tag if row else '' }}" class="form-input" placeholder="ASSET-001"/>
+      </div>
+
+      <div class="form-group">
+        <label>Manufacturer</label>
+        <input type="text" name="manufacturer" value="{{ row.manufacturer if row else '' }}" class="form-input" placeholder="Dell"/>
+      </div>
+
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" name="model" value="{{ row.model if row else '' }}" class="form-input" placeholder="PowerEdge R740"/>
+      </div>
+
+      <div class="form-group">
+        <label>Serial Number</label>
+        <input type="text" name="serial_number" value="{{ row.serial_number if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Warranty Type</label>
+        <input type="text" name="warranty_type" value="{{ row.warranty_type if row else '' }}" class="form-input" placeholder="onsite, depot, parts-only"/>
+      </div>
+
+      <div class="form-group">
+        <label>Provider</label>
+        <input type="text" name="provider" value="{{ row.provider if row else '' }}" class="form-input" placeholder="Dell ProSupport"/>
+      </div>
+
+      <div class="form-group">
+        <label>Support Level</label>
+        <input type="text" name="support_level" value="{{ row.support_level if row else '' }}" class="form-input" placeholder="24x7, 9x5, NBD"/>
+      </div>
+
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" name="start_date" value="{{ row.start_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" name="end_date" value="{{ row.end_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Support Contact</label>
+        <input type="text" name="support_contact" value="{{ row.support_contact if row else '' }}" class="form-input" placeholder="1-800-xxx-xxxx"/>
+      </div>
+
+      <div class="form-group">
+        <label>Ticket / Portal URL</label>
+        <input type="text" name="ticket_url" value="{{ row.ticket_url if row else '' }}" class="form-input" placeholder="https://support.vendor.com"/>
+      </div>
+
+      <div class="form-group">
+        <label>Contract Number</label>
+        <input type="text" name="contract_number" value="{{ row.contract_number if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Cost ($)</label>
+        <input type="number" name="cost" step="0.01" value="{{ row.cost if row else '' }}" class="form-input" placeholder="3200.00"/>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['active','expired','extended','voided'] %}
+            <option value="{{ s }}" {% if row and row.status==s %}selected{% elif not row and s=='active' %}selected{% endif %}>{{ s.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea name="notes" class="form-textarea" rows="3">{{ row.notes if row else '' }}</textarea>
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} Warranty</button>
+      <a href="{{ url_for('warranty_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
