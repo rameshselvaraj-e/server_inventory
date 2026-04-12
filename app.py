@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 #app.secret_key = 'server_inventory_secret_key_2024'
-
+app.secret_key = 'sim_secret_key'
 # ─── DB CONFIG ────────────────────────────────────────────────────────────────
 DB_CONFIG = {
     'host': 'localhost',
@@ -238,7 +238,7 @@ def warranty_list():
     sql = "SELECT * FROM warranty_info WHERE 1=1"
     params = []
     if search:
-        sql += " AND (device_name LIKE %s OR manufacturer LIKE %s OR asset_tag LIKE %s OR serial_number LIKE %s)"
+        sql += " AND (server_name LIKE %s OR manufacturer LIKE %s OR asset_tag LIKE %s OR serial_number LIKE %s)"
         params += [f'%{search}%'] * 4
     if status:
         sql += " AND status=%s"
@@ -252,13 +252,13 @@ def warranty_add():
     if request.method == 'POST':
         f = request.form
         query("""INSERT INTO warranty_info
-            (asset_tag,device_name,manufacturer,model,serial_number,warranty_type,provider,
-             start_date,end_date,support_level,support_contact,ticket_url,contract_number,cost,notes,status)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (f['asset_tag'],f['device_name'],f['manufacturer'],f['model'],f['serial_number'],
-             f['warranty_type'],f['provider'],f.get('start_date') or None,f.get('end_date') or None,
-             f['support_level'],f['support_contact'],f['ticket_url'],f['contract_number'],
-             f.get('cost') or None,f['notes'],f['status']))
+            (asset_tag,server_name,manufacturer,model,serial_number,service_support,
+             start_date,end_date,support_level,support_contact,owners,contract_number,manage_by,notes,status)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (f['asset_tag'],f['server_name'],f['manufacturer'],f['model'],f['serial_number'],
+             f['service_support'],f.get('start_date') or None,f.get('end_date') or None,
+             f['support_level'],f['support_contact'],f['owners'],f['contract_number'],
+             f['manage_by'],f['notes'],f['status']))
         flash('Warranty record added!', 'success')
         return redirect(url_for('warranty_list'))
     return render_template('warranty/form.html', row=None, action='Add')
@@ -268,13 +268,13 @@ def warranty_edit(id):
     if request.method == 'POST':
         f = request.form
         query("""UPDATE warranty_info SET
-            asset_tag=%s,device_name=%s,manufacturer=%s,model=%s,serial_number=%s,warranty_type=%s,
-            provider=%s,start_date=%s,end_date=%s,support_level=%s,support_contact=%s,ticket_url=%s,
-            contract_number=%s,cost=%s,notes=%s,status=%s WHERE id=%s""",
-            (f['asset_tag'],f['device_name'],f['manufacturer'],f['model'],f['serial_number'],
-             f['warranty_type'],f['provider'],f.get('start_date') or None,f.get('end_date') or None,
-             f['support_level'],f['support_contact'],f['ticket_url'],f['contract_number'],
-             f.get('cost') or None,f['notes'],f['status'],id))
+            asset_tag=%s,server_name=%s,manufacturer=%s,model=%s,serial_number=%s,
+            service_support=%s,start_date=%s,end_date=%s,support_level=%s,support_contact=%s,owners=%s,
+            contract_number=%s,manage_by=%s,notes=%s,status=%s WHERE id=%s""",
+            (f['asset_tag'],f['server_name'],f['manufacturer'],f['model'],f['serial_number'],
+             f['service_support'],f.get('start_date') or None,f.get('end_date') or None,
+             f['support_level'],f['support_contact'],f['owners'],f['contract_number'],
+             f['manage_by'],f['notes'],f['status'],id))
         flash('Warranty updated!', 'success')
         return redirect(url_for('warranty_list'))
     row = query("SELECT * FROM warranty_info WHERE id=%s", (id,), fetchone=True)

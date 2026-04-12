@@ -212,8 +212,8 @@ img {
 /* ─── TABLE ─────────────────────────────────────────────────────────────────── */
 .table-wrapper {
   background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
   overflow: auto;
 }
 
@@ -226,21 +226,22 @@ img {
 .data-table th {
   background: var(--bg3);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  padding: 11px 14px;
+  padding: 10px 12px;
   text-align: left;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .data-table td {
-  padding: 11px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
+  text-align: left;
 }
 
 .data-table tbody tr:last-child td { border-bottom: none; }
