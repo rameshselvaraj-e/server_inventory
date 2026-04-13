@@ -310,12 +310,12 @@ def vendor_add():
     if request.method == 'POST':
         f = request.form
         query("""INSERT INTO vendor_info
-            (vendor_name,category,contact_name,contact_email,contact_phone,account_manager,
-             am_email,am_phone,website,address,contract_start,contract_end,payment_terms,
+            (vendor_name,category,contact_email,contact_phone,account_manager,
+             am_email,am_phone,website,login_id,address,contract_start,contract_end,payment_terms,
              account_number,notes,status)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (f['vendor_name'],f['category'],f['contact_name'],f['contact_email'],f['contact_phone'],
-             f['account_manager'],f['am_email'],f['am_phone'],f['website'],f['address'],
+            (f['vendor_name'],f['category'],f['contact_email'],f['contact_phone'],
+             f['account_manager'],f['am_email'],f['am_phone'],f['website'],f['login_id'],f['address'],
              f.get('contract_start') or None,f.get('contract_end') or None,
              f['payment_terms'],f['account_number'],f['notes'],f['status']))
         flash('Vendor added!', 'success')
@@ -327,12 +327,12 @@ def vendor_edit(id):
     if request.method == 'POST':
         f = request.form
         query("""UPDATE vendor_info SET
-            vendor_name=%s,category=%s,contact_name=%s,contact_email=%s,contact_phone=%s,
-            account_manager=%s,am_email=%s,am_phone=%s,website=%s,address=%s,
+            vendor_name=%s,category=%s,contact_email=%s,contact_phone=%s,
+            account_manager=%s,am_email=%s,am_phone=%s,website=%s,login_id=%s,address=%s,
             contract_start=%s,contract_end=%s,payment_terms=%s,account_number=%s,
             notes=%s,status=%s WHERE id=%s""",
-            (f['vendor_name'],f['category'],f['contact_name'],f['contact_email'],f['contact_phone'],
-             f['account_manager'],f['am_email'],f['am_phone'],f['website'],f['address'],
+            (f['vendor_name'],f['category'],f['contact_email'],f['contact_phone'],
+             f['account_manager'],f['am_email'],f['am_phone'],f['website'],f['login_id'],f['address'],
              f.get('contract_start') or None,f.get('contract_end') or None,
              f['payment_terms'],f['account_number'],f['notes'],f['status'],id))
         flash('Vendor updated!', 'success')
