@@ -28,6 +28,12 @@
       <a href="{{ url_for('virtual_list') }}" class="nav-item {% if 'virtual' in request.endpoint %}active{% endif %}">
         <span class="material-symbols-outlined">computer</span> Virtual
       </a>
+      <a href="{{ url_for('gpu_list') }}" class="nav-item {% if 'gpu' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">memory</span> GPU
+      </a>
+      <a href="{{ url_for('storage_list') }}" class="nav-item {% if 'storage' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">storage</span> Storage
+      </a>
       <div class="nav-section">COMPLIANCE</div>
       <a href="{{ url_for('license_list') }}" class="nav-item {% if 'license' in request.endpoint %}active{% endif %}">
         <span class="material-symbols-outlined">license</span> License

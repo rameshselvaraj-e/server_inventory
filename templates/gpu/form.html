@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} GPU{% endblock %}
+{% block page_title %}{{ action }} GPU Record{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <form method="post">
+    <div class="form-section-title">Device Identity</div>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Server Name *</label>
+        <input type="text" name="server_name" value="{{ row.server_name if row else '' }}" required class="form-input" placeholder="phyxxxgpu01xxxx"/>
+      </div>
+
+      <div class="form-group">
+        <label>Server IP Address</label>
+        <input type="text" name="ip_address" value="{{ row.ip_address if row else '' }}" class="form-input" placeholder="10.10.1.50"/>
+      </div>
+      
+      <div class="form-group">
+        <label>GPU Manufacturer</label>
+        <select name="manufacturer" class="form-select">
+          {% for m in ['NVIDIA','AMD','Intel','Other'] %}
+            <option value="{{ m }}" {% if row and row.manufacturer==m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Model</label>
+        <input type="text" name="model" value="{{ row.model if row else '' }}" class="form-input" placeholder="A100 80GB SXM4, RTX 4090, H100..."/>
+      </div>
+
+       <div class="form-group">
+        <label>VRAM (GB)</label>
+        <input type="number" name="vram_gb" value="{{ row.vram_gb if row else '' }}" class="form-input" placeholder="80"/>
+      </div>
+
+      <div class="form-group">
+        <label>Serial Number</label>
+        <input type="text" name="serial_number" value="{{ row.serial_number if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>GPU UUID</label>
+        <input type="text" name="gpu_uuid" value="{{ row.gpu_uuid if row else '' }}" class="form-input" placeholder="Slot 1, SXM Slot 2"/>
+      </div>
+
+
+      <div class="form-group">
+        <label>No. of GPU</label>
+        <input type="text" name="no_of_gpu" value="{{ row.no_of_gpu if row else '' }}" class="form-input" placeholder="1, 2, 3, etc..."/>
+      </div>
+
+      <div class="form-group">
+        <label>CUDA Version</label>
+        <input type="number" name="cuda_vers" value="{{ row.cuda_vers if row else '' }}" class="form-input" placeholder="6912"/>
+      </div>
+
+       <div class="form-group">
+        <label>Driver Version</label>
+        <input type="text" name="driver_version" value="{{ row.driver_version if row else '' }}" class="form-input" placeholder="535.104.12"/>
+      </div>
+
+      <div class="form-group">
+        <label>Firmware Version</label>
+        <input type="text" name="firmware_version" value="{{ row.firmware_version if row else '' }}" class="form-input"/>
+      </div>
+
+     <div class="form-group">
+        <label>Owners</label>
+        <input type="text" name="owners" value="{{ row.owners if row else '' }}" class="form-input" placeholder="ML training, inference, rendering, compute"/>
+      </div>
+
+    </div>
+  
+    <div class="form-group">
+        <label>Environment</label>
+        <select name="environment" class="form-select">
+          {% for e in ['production','staging','development','testing'] %}
+            <option value="{{ e }}" {% if row and row.environment==e %}selected{% elif not row and e=='production' %}selected{% endif %}>{{ e.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['active','inactive','faulty','maintenance','decommissioned'] %}
+            <option value="{{ s }}" {% if row and row.status==s %}selected{% elif not row and s=='active' %}selected{% endif %}>{{ s.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Purchase Date</label>
+        <input type="date" name="purchase_date" value="{{ row.purchase_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea name="notes" class="form-textarea" rows="3">{{ row.notes if row else '' }}</textarea>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} GPU</button>
+      <a href="{{ url_for('gpu_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

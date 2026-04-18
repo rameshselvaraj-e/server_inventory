@@ -54,6 +54,26 @@
     </div>
   </a>
 
+  <a href="{{ url_for('gpu_list') }}" class="stat-card card-teal">
+    <div class="stat-icon">◧</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.gpu }}</div>
+      <div class="stat-label">GPU Devices</div>
+      <div class="stat-sub">{{ stats.gpu_active }} active</div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('storage_list') }}" class="stat-card card-cyan">
+    <div class="stat-icon">▤</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.storage }}</div>
+      <div class="stat-label">Storage Devices</div>
+      <div class="stat-sub {{ 'alert-text' if stats.storage_faulty > 0 else '' }}">
+        {{ stats.total_storage_tb }} TB total{% if stats.storage_faulty > 0 %} &middot; {{ stats.storage_faulty }} faulty{% endif %}
+      </div>
+    </div>
+  </a>
+
 </div>
 
 <div class="quick-links">
@@ -64,6 +84,8 @@
     <a href="{{ url_for('license_add') }}" class="quick-btn">+ Add License</a>
     <a href="{{ url_for('warranty_add') }}" class="quick-btn">+ Add Warranty</a>
     <a href="{{ url_for('vendor_add') }}" class="quick-btn">+ Add Vendor</a>
+    <a href="{{ url_for('gpu_add') }}" class="quick-btn">+ Add GPU</a>
+    <a href="{{ url_for('storage_add') }}" class="quick-btn">+ Add Storage Device</a>
   </div>
 </div>
 {% endblock %}

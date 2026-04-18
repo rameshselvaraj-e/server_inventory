@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Storage Inventory{% endblock %}
+{% block page_title %}Storage Inventory{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('storage_add') }}" class="btn-add">+ Add Storage</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search device name, manufacturer, host, array..." class="filter-input"/>
+    <select name="storage_type" class="filter-select">
+      <option value="">All Types</option>
+      {% for t in ['SSD','HDD','NVMe','SAN','NAS','Tape','Object','Cloud'] %}
+        <option value="{{ t }}" {% if storage_type==t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="faulty"         {% if status=='faulty' %}selected{% endif %}>Faulty</option>
+      <option value="degraded"       {% if status=='degraded' %}selected{% endif %}>Degraded</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('storage_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Device Name</th>
+        <th>Type</th>
+        <th>Manufacturer / Model</th>
+        <th>Capacity</th>
+        <th>Used</th>
+        <th>Interface</th>
+        <th>RAID</th>
+        <th>Host / Array</th>
+        <th>Mount Point</th>
+        <th>IOPS</th>
+        <th>Environment</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.device_name }}</td>
+        <td><span class="badge badge-stg-{{ r.storage_type|lower }}">{{ r.storage_type }}</span></td>
+        <td>{{ r.manufacturer }} {{ r.model }}</td>
+        <td>
+          {% if r.capacity_tb %}
+            {% if r.capacity_tb < 1 %}
+              {{ (r.capacity_tb * 1000)|int }} GB
+            {% else %}
+              {{ r.capacity_tb }} TB
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if r.used_tb and r.capacity_tb %}
+            {% set pct = ((r.used_tb / r.capacity_tb) * 100)|int %}
+            <div class="usage-bar-wrap" title="{{ pct }}%">
+              <div class="usage-bar" style="width:{{ pct }}%; background: {{ 'var(--red)' if pct > 85 else ('var(--yellow)' if pct > 70 else 'var(--green)') }};"></div>
+            </div>
+            <span class="usage-text">{{ r.used_tb }} TB ({{ pct }}%)</span>
+          {% else %}—{% endif %}
+        </td>
+        <td>{{ r.interface or '—' }}</td>
+        <td class="mono">{{ r.raid_group or '—' }}</td>
+        <td class="mono">{{ r.array_name or r.host_server or '—' }}</td>
+        <td class="mono">{{ r.mount_point or '—' }}</td>
+        <td>{{ '{:,}'.format(r.iops) if r.iops else '—' }}</td>
+        <td><span class="badge badge-env-{{ r.environment }}">{{ r.environment }}</span></td>
+        <td><span class="badge badge-stg-status-{{ r.status }}">{{ r.status }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('storage_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('storage_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="14" class="no-data">No storage records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -51,10 +51,15 @@ def index():
         'license':  query("SELECT COUNT(*) as c FROM license_inventory",  fetchone=True)['c'],
         'warranty': query("SELECT COUNT(*) as c FROM warranty_info",       fetchone=True)['c'],
         'vendor':   query("SELECT COUNT(*) as c FROM vendor_info",         fetchone=True)['c'],
+        'gpu':      query("SELECT COUNT(*) as c FROM gpu_inventory",       fetchone=True)['c'],
+        'storage':  query("SELECT COUNT(*) as c FROM storage_inventory",   fetchone=True)['c'],
         'physical_active':  query("SELECT COUNT(*) as c FROM physical_inventory WHERE status='active'",  fetchone=True)['c'],
         'vm_running':       query("SELECT COUNT(*) as c FROM virtual_inventory WHERE status='running'",  fetchone=True)['c'],
         'license_expiring': query("SELECT COUNT(*) as c FROM license_inventory WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND expiry_date >= CURDATE()", fetchone=True)['c'],
         'warranty_expired': query("SELECT COUNT(*) as c FROM warranty_info WHERE status='expired'", fetchone=True)['c'],
+         'gpu_active':       query("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='active'", fetchone=True)['c'],
+        'storage_faulty':   query("SELECT COUNT(*) as c FROM storage_inventory WHERE status IN ('faulty','degraded')", fetchone=True)['c'],
+        'total_storage_tb': query("SELECT COALESCE(ROUND(SUM(capacity_tb),1),0) as c FROM storage_inventory WHERE status != 'decommissioned'", fetchone=True)['c'],
     }
     return render_template('index.html', stats=stats)
 
@@ -345,6 +350,136 @@ def vendor_delete(id):
     query("DELETE FROM vendor_info WHERE id=%s", (id,))
     flash('Vendor deleted.', 'warning')
     return redirect(url_for('vendor_list'))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GPU INVENTORY
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.route('/gpu')
+def gpu_list():
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM gpu_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (gpu_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR host_server LIKE %s OR assigned_to LIKE %s)"
+        params += [f'%{search}%'] * 5
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+    return render_template('gpu/list.html', rows=rows, search=search, status=status)
+ 
+@app.route('/gpu/add', methods=['GET','POST'])
+def gpu_add():
+    if request.method == 'POST':
+        f = request.form
+        query("""INSERT INTO gpu_inventory
+            (server_name,ip_address,manufacturer,model,serial_number,vram_gb,gpu_uuid,cuda_vers,no_of_gpu,driver_version,
+            firmware_version,environment,status,purchase_date,owners,notes)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (f['server_name'],f['ip_address'],f['manufacturer'],f['model'],f['serial_number'],
+             f.get('vram_gb') or None,f.get('gpu_uuid') or None,f['cuda_vers'],
+             f['no_of_gpu'],f['driver_version'],f['firmware_version'],
+             f['environment'],f['status'],f.get('purchase_date') or None,f['owners'],f['notes']))
+        flash('GPU record added successfully!', 'success')
+        return redirect(url_for('gpu_list'))
+    return render_template('gpu/form.html', row=None, action='Add')
+ 
+@app.route('/gpu/edit/<int:id>', methods=['GET','POST'])
+def gpu_edit(id):
+    if request.method == 'POST':
+        f = request.form
+        query("""UPDATE gpu_inventory SET
+            server_name=%s,ip_address=%s,manufacturer=%s,model=%s,serial_number=%s,vram_gb=%s,gpu_uuid=%s,cuda_vers=%s,no_of_gpu=%s,driver_version=%s,
+            firmware_version=%s,environment=%s,status=%s,purchase_date=%s,owners=%s,notes=%s WHERE id=%s""",
+            (f['server_name'],f['ip_address'],f['manufacturer'],f['model'],f['serial_number'],
+             f.get('vram_gb') or None,f.get('gpu_uuid') or None,f.get('cuda_vers') or None,
+             f['no_of_gpu'],f['driver_version'],f['firmware_version'],f['environment'],f['status'],
+             f.get('purchase_date') or None,f['owners'],f['notes'],id))
+        flash('GPU record updated!', 'success')
+        return redirect(url_for('gpu_list'))
+    row = query("SELECT * FROM gpu_inventory WHERE id=%s", (id,), fetchone=True)
+    return render_template('gpu/form.html', row=row, action='Edit')
+ 
+@app.route('/gpu/delete/<int:id>', methods=['POST'])
+def gpu_delete(id):
+    query("DELETE FROM gpu_inventory WHERE id=%s", (id,))
+    flash('GPU record deleted.', 'warning')
+    return redirect(url_for('gpu_list'))
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# STORAGE INVENTORY
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.route('/storage')
+def storage_list():
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    storage_type = request.args.get('storage_type', '')
+    sql = "SELECT * FROM storage_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (device_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR host_server LIKE %s OR array_name LIKE %s)"
+        params += [f'%{search}%'] * 5
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    if storage_type:
+        sql += " AND storage_type=%s"
+        params.append(storage_type)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+    return render_template('storage/list.html', rows=rows, search=search, status=status, storage_type=storage_type)
+ 
+@app.route('/storage/add', methods=['GET','POST'])
+def storage_add():
+    if request.method == 'POST':
+        f = request.form
+        query("""INSERT INTO storage_inventory
+            (device_name,asset_tag,storage_type,manufacturer,model,serial_number,capacity_tb,
+             interface,form_factor,rpm,host_server,array_name,raid_group,mount_point,
+             ip_address,filesystem,used_tb,iops,throughput_gbps,environment,status,
+             purchase_date,assigned_to,notes)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (f['device_name'],f['asset_tag'],f['storage_type'],f['manufacturer'],f['model'],
+             f['serial_number'],f.get('capacity_tb') or None,f['interface'],f['form_factor'],
+             f.get('rpm') or None,f['host_server'],f['array_name'],f['raid_group'],
+             f['mount_point'],f['ip_address'],f['filesystem'],
+             f.get('used_tb') or None,f.get('iops') or None,f.get('throughput_gbps') or None,
+             f['environment'],f['status'],f.get('purchase_date') or None,
+             f['assigned_to'],f['notes']))
+        flash('Storage device added successfully!', 'success')
+        return redirect(url_for('storage_list'))
+    return render_template('storage/form.html', row=None, action='Add')
+ 
+@app.route('/storage/edit/<int:id>', methods=['GET','POST'])
+def storage_edit(id):
+    if request.method == 'POST':
+        f = request.form
+        query("""UPDATE storage_inventory SET
+            device_name=%s,asset_tag=%s,storage_type=%s,manufacturer=%s,model=%s,serial_number=%s,
+            capacity_tb=%s,interface=%s,form_factor=%s,rpm=%s,host_server=%s,array_name=%s,
+            raid_group=%s,mount_point=%s,ip_address=%s,filesystem=%s,used_tb=%s,iops=%s,
+            throughput_gbps=%s,environment=%s,status=%s,purchase_date=%s,
+            assigned_to=%s,notes=%s WHERE id=%s""",
+            (f['device_name'],f['asset_tag'],f['storage_type'],f['manufacturer'],f['model'],
+             f['serial_number'],f.get('capacity_tb') or None,f['interface'],f['form_factor'],
+             f.get('rpm') or None,f['host_server'],f['array_name'],f['raid_group'],
+             f['mount_point'],f['ip_address'],f['filesystem'],
+             f.get('used_tb') or None,f.get('iops') or None,f.get('throughput_gbps') or None,
+             f['environment'],f['status'],f.get('purchase_date') or None,
+             f['assigned_to'],f['notes'],id))
+        flash('Storage device updated!', 'success')
+        return redirect(url_for('storage_list'))
+    row = query("SELECT * FROM storage_inventory WHERE id=%s", (id,), fetchone=True)
+    return render_template('storage/form.html', row=row, action='Edit')
+ 
+@app.route('/storage/delete/<int:id>', methods=['POST'])
+def storage_delete(id):
+    query("DELETE FROM storage_inventory WHERE id=%s", (id,))
+    flash('Storage device deleted.', 'warning')
+    return redirect(url_for('storage_list'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

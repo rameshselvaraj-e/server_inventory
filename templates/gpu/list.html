@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}GPU Inventory{% endblock %}
+{% block page_title %}GPU Inventory{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('gpu_add') }}" class="btn-add">+ Add GPU</a>
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search GPU name, model, host, assigned to..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="faulty"         {% if status=='faulty' %}selected{% endif %}>Faulty</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('gpu_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Server Name</th>
+        <th>GPU Manufacturer</th>
+        <th>GPU Model</th>
+        <th>VRAM</th>
+        <th>CUDA / Driver Version</th>
+        <th>UUID</th>
+        <th>No.of GPU's</th>
+        <th>Environment</th>
+        <th>Owners</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.server_name }}</td>
+        <td>
+          {% if r.manufacturer == 'NVIDIA' %}
+            <span class="vendor-pill vendor-nvidia">NVIDIA</span>
+          {% elif r.manufacturer == 'AMD' %}
+            <span class="vendor-pill vendor-amd">AMD</span>
+          {% elif r.manufacturer == 'Intel' %}
+            <span class="vendor-pill vendor-intel">Intel</span>
+          {% else %}
+            {{ r.manufacturer or '—' }}
+          {% endif %}
+        </td>
+        <td>{{ r.model or '—' }}</td>
+        <td>{{ r.vram_gb or '?' }} GB</td>
+        <td class="mono">
+          {{ r.cuda_vers or '—' }}
+          {% if r.driver_version %} / {{ r.driver_version }}{% endif %}
+        </td>
+        <td>{{ r.gpu_uuid or '—' }}</td>
+        <td>{{ r.no_of_gpu or '—' }}</td>
+        <td><span class="badge badge-env-{{ r.environment }}">{{ r.environment }}</span></td>
+        <td>{{ r.owners or '—' }}</td>
+        <td><span class="badge badge-gpu-{{ r.status }}">{{ r.status }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('gpu_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('gpu_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="14" class="no-data">No GPU records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

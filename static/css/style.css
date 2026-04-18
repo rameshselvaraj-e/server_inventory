@@ -54,9 +54,10 @@ body {
 /* .brand-icon { font-size: 22px; color: var(--accent); } */
 
 .brand-img {
-  width: 110px;
-  height: 65px;
-  color: var(--accent);
+  width: 100px;
+  height: 40px;
+  /*color: var(--accent);
+  mix-blend-mode: multiply; */
 }
 
 .brand-text  { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
@@ -437,3 +438,81 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── GPU & STORAGE ADDITIONS ────────────────────────────────────────────────── */
+
+/* Dashboard new cards */
+.card-teal  { border-color: rgba(32,201,151,0.4); }
+.card-teal .stat-icon { color: #20c997; }
+.card-cyan  { border-color: rgba(23,162,184,0.4); }
+.card-cyan .stat-icon { color: #17a2b8; }
+
+/* GPU status badges */
+.badge-gpu-active        { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-gpu-inactive      { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-gpu-faulty        { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-gpu-maintenance   { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-gpu-decommissioned{ background: rgba(139,148,158,0.12);color: var(--muted); }
+
+/* Storage type badges */
+.badge-stg-ssd    { background: rgba(88,166,255,0.15);  color: var(--accent); }
+.badge-stg-hdd    { background: rgba(139,148,158,0.15); color: var(--muted);  }
+.badge-stg-nvme   { background: rgba(32,201,151,0.15);  color: #20c997;       }
+.badge-stg-san    { background: rgba(188,140,255,0.15); color: var(--purple); }
+.badge-stg-nas    { background: rgba(255,166,87,0.15);  color: var(--orange); }
+.badge-stg-tape   { background: rgba(210,153,34,0.15);  color: var(--yellow); }
+.badge-stg-object { background: rgba(23,162,184,0.15);  color: #17a2b8;       }
+.badge-stg-cloud  { background: rgba(63,185,80,0.15);   color: var(--green);  }
+
+/* Storage status badges */
+.badge-stg-status-active        { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-stg-status-inactive      { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-stg-status-faulty        { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-stg-status-degraded      { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-stg-status-maintenance   { background: rgba(88,166,255,0.15); color: var(--accent);}
+.badge-stg-status-decommissioned{ background: rgba(139,148,158,0.12);color: var(--muted); }
+
+/* GPU vendor pills */
+.vendor-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.vendor-nvidia { background: rgba(118,185,0,0.15);   color: #76b900; }
+.vendor-amd    { background: rgba(237,28,36,0.15);   color: #ed1c24; }
+.vendor-intel  { background: rgba(0,113,197,0.15);   color: #0071c5; }
+
+/* Storage usage bar */
+.usage-bar-wrap {
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+  width: 80px;
+  margin-bottom: 3px;
+}
+.usage-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.usage-text {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Form section titles */
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
