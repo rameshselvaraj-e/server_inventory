@@ -420,7 +420,7 @@ def storage_list():
     sql = "SELECT * FROM storage_inventory WHERE 1=1"
     params = []
     if search:
-        sql += " AND (device_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR host_server LIKE %s OR array_name LIKE %s)"
+        sql += " AND (cluster_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR node_name LIKE %s)"
         params += [f'%{search}%'] * 5
     if status:
         sql += " AND status=%s"
@@ -437,18 +437,15 @@ def storage_add():
     if request.method == 'POST':
         f = request.form
         query("""INSERT INTO storage_inventory
-            (device_name,asset_tag,storage_type,manufacturer,model,serial_number,capacity_tb,
-             interface,form_factor,rpm,host_server,array_name,raid_group,mount_point,
-             ip_address,filesystem,used_tb,iops,throughput_gbps,environment,status,
-             purchase_date,assigned_to,notes)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (f['device_name'],f['asset_tag'],f['storage_type'],f['manufacturer'],f['model'],
-             f['serial_number'],f.get('capacity_tb') or None,f['interface'],f['form_factor'],
-             f.get('rpm') or None,f['host_server'],f['array_name'],f['raid_group'],
-             f['mount_point'],f['ip_address'],f['filesystem'],
-             f.get('used_tb') or None,f.get('iops') or None,f.get('throughput_gbps') or None,
-             f['environment'],f['status'],f.get('purchase_date') or None,
-             f['assigned_to'],f['notes']))
+            (cluster_name,cluster_ipaddrs,node_name,node_ipaddrs,mgmt_ipaddrs,service_ipaddrs,interclus_ipaddrs,
+            storage_type,manufacturer,model,serial_number,capacity_tb,asset_tag,used_tb,
+            environment,status,purchase_date,support_end,owners,notes)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (f['cluster_name'],f['cluster_ipaddrs'],f['node_name'],f['node_ipaddrs'],f['mgmt_ipaddrs'],
+             f['service_ipaddrs'],f['interclus_ipaddrs'],f['storage_type'],f['manufacturer'],f['model'],
+             f['serial_number'],f.get('capacity_tb') or None,f['asset_tag'],f.get('used_tb') or None,
+             f['environment'],f['status'],f.get('purchase_date') or None,f.get('support_end'),
+             f['owners'],f['notes']))
         flash('Storage device added successfully!', 'success')
         return redirect(url_for('storage_list'))
     return render_template('storage/form.html', row=None, action='Add')
@@ -458,18 +455,16 @@ def storage_edit(id):
     if request.method == 'POST':
         f = request.form
         query("""UPDATE storage_inventory SET
-            device_name=%s,asset_tag=%s,storage_type=%s,manufacturer=%s,model=%s,serial_number=%s,
-            capacity_tb=%s,interface=%s,form_factor=%s,rpm=%s,host_server=%s,array_name=%s,
-            raid_group=%s,mount_point=%s,ip_address=%s,filesystem=%s,used_tb=%s,iops=%s,
-            throughput_gbps=%s,environment=%s,status=%s,purchase_date=%s,
-            assigned_to=%s,notes=%s WHERE id=%s""",
-            (f['device_name'],f['asset_tag'],f['storage_type'],f['manufacturer'],f['model'],
-             f['serial_number'],f.get('capacity_tb') or None,f['interface'],f['form_factor'],
-             f.get('rpm') or None,f['host_server'],f['array_name'],f['raid_group'],
-             f['mount_point'],f['ip_address'],f['filesystem'],
-             f.get('used_tb') or None,f.get('iops') or None,f.get('throughput_gbps') or None,
-             f['environment'],f['status'],f.get('purchase_date') or None,
-             f['assigned_to'],f['notes'],id))
+            cluster_name=%s,cluster_ipaddrs=%s,node_name=%s,node_ipaddrs=%s,mgmt_ipaddrs=%s,service_ipaddrs=%s,
+            interclus_ipaddrs=%s,storage_type=%s,manufacturer=%s,model=%s,serial_number=%s,
+            capacity_tb=%s,asset_tag=%s,used_tb=%s,environment=%s,status=%s,purchase_date=%s,
+            support_end=%s,owners=%s,notes=%s WHERE id=%s""",
+            (f['cluster_name'],f['cluster_ipaddrs'],f['node_name'],f['node_ipaddrs'],f['mgmt_ipaddrs'],
+             f['service_ipaddrs'],f['interclus_ipaddrs'],f['storage_type'],f['manufacturer'],f['model'],
+             f['serial_number'],f.get('capacity_tb') or None,f['asset_tag'],f.get('used_tb') or None,
+             f['environment'],f['status'],f.get('purchase_date') or None,f.get('support_end'),           
+             f['owners'],f['notes'],id))
+    
         flash('Storage device updated!', 'success')
         return redirect(url_for('storage_list'))
     row = query("SELECT * FROM storage_inventory WHERE id=%s", (id,), fetchone=True)
