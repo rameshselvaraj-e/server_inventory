@@ -1,0 +1,1765 @@
+python3 << 'PY'
+with open('/home/claude/inv_v4/app.py','r') as f:
+    c = f.read()
+
+# ── patch physical_list ──────────────────────────────────────────────────────
+old = """@app.route('/physical')
+def physical_list():
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM physical_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (hostname LIKE %s OR ip_address LIKE %s OR asset_tag LIKE %s OR manufacturer LIKE %s)"
+        params += [f'%{search}%'] * 4
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+    return render_template('physical/list.html', rows=rows, search=search, status=status)"""
+
+new = """@app.route('/physical')
+def physical_list():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM physical_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (hostname LIKE %s OR ip_address LIKE %s OR asset_tag LIKE %s OR manufacturer LIKE %s OR datacenter LIKE %s OR os LIKE %s)"
+        params += ['%'+search+'%'] * 6
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+
+    # dashboard WHERE mirrors the search filters
+    d_conds, d_params = ['1=1'], []
+    if search:
+        d_conds.append("(hostname LIKE %s OR ip_address LIKE %s OR asset_tag LIKE %s OR manufacturer LIKE %s OR datacenter LIKE %s OR os LIKE %s)")
+        d_params += ['%'+search+'%'] * 6
+    if status:
+        d_conds.append("status=%s")
+        d_params.append(status)
+    dw = "WHERE " + " AND ".join(d_conds)
+    dp = d_params or None
+
+    def _q(s,p=None): return query(s,p,fetchone=True) or {}
+    dash = {
+        'total':        _q("SELECT COUNT(*) c FROM physical_inventory "+dw, dp)['c'],
+        'active':       _q("SELECT COUNT(*) c FROM physical_inventory "+dw+" AND status='active'", dp)['c'],
+        'inactive':     _q("SELECT COUNT(*) c FROM physical_inventory "+dw+" AND status='inactive'", dp)['c'],
+        'maintenance':  _q("SELECT COUNT(*) c FROM physical_inventory "+dw+" AND status='maintenance'", dp)['c'],
+        'decommissioned': _q("SELECT COUNT(*) c FROM physical_inventory "+dw+" AND status='decommissioned'", dp)['c'],
+        'total_ram':    _q("SELECT COALESCE(SUM(ram_gb),0) c FROM physical_inventory "+dw, dp)['c'],
+        'total_cores':  _q("SELECT COALESCE(SUM(cpu_cores),0) c FROM physical_inventory "+dw, dp)['c'],
+        'by_dc':   query("SELECT COALESCE(datacenter,'Unknown') dc, COUNT(*) cnt FROM physical_inventory "+dw+" GROUP BY datacenter ORDER BY cnt DESC LIMIT 6", dp) or [],
+        'by_type': query("SELECT COALESCE(server_type,'Unknown') stype, COUNT(*) cnt FROM physical_inventory "+dw+" GROUP BY server_type ORDER BY cnt DESC LIMIT 6", dp) or [],
+        'by_mfr':  query("SELECT COALESCE(manufacturer,'Unknown') mfr, COUNT(*) cnt FROM physical_inventory "+dw+" GROUP BY manufacturer ORDER BY cnt DESC LIMIT 6", dp) or [],
+        'by_os':   query("SELECT COALESCE(os,'Unknown') os, COUNT(*) cnt FROM physical_inventory "+dw+" GROUP BY os ORDER BY cnt DESC LIMIT 5", dp) or [],
+    }
+    return render_template('physical/list.html', rows=rows, search=search, status=status, dash=dash)"""
+
+assert old in c
+c = c.replace(old, new)
+
+# ── patch virtual_list ───────────────────────────────────────────────────────
+old2 = """@app.route('/virtual')
+def virtual_list():
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM virtual_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (vm_name LIKE %s OR ip_address LIKE %s OR host_server LIKE %s OR owner LIKE %s)"
+        params += [f'%{search}%'] * 4
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+    return render_template('virtual/list.html', rows=rows, search=search, status=status)"""
+
+new2 = """@app.route('/virtual')
+def virtual_list():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM virtual_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (vm_name LIKE %s OR ip_address LIKE %s OR host_server LIKE %s OR owner LIKE %s OR project LIKE %s OR os LIKE %s)"
+        params += ['%'+search+'%'] * 6
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+
+    d_conds, d_params = ['1=1'], []
+    if search:
+        d_conds.append("(vm_name LIKE %s OR ip_address LIKE %s OR host_server LIKE %s OR owner LIKE %s OR project LIKE %s OR os LIKE %s)")
+        d_params += ['%'+search+'%'] * 6
+    if status:
+        d_conds.append("status=%s")
+        d_params.append(status)
+    dw = "WHERE " + " AND ".join(d_conds)
+    dp = d_params or None
+
+    def _q(s,p=None): return query(s,p,fetchone=True) or {}
+    dash = {
+        'total':     _q("SELECT COUNT(*) c FROM virtual_inventory "+dw, dp)['c'],
+        'running':   _q("SELECT COUNT(*) c FROM virtual_inventory "+dw+" AND status='running'", dp)['c'],
+        'stopped':   _q("SELECT COUNT(*) c FROM virtual_inventory "+dw+" AND status='stopped'", dp)['c'],
+        'suspended': _q("SELECT COUNT(*) c FROM virtual_inventory "+dw+" AND status='suspended'", dp)['c'],
+        'deleted':   _q("SELECT COUNT(*) c FROM virtual_inventory "+dw+" AND status='deleted'", dp)['c'],
+        'total_vcpu':    _q("SELECT COALESCE(SUM(vcpu),0) c FROM virtual_inventory "+dw, dp)['c'],
+        'total_ram':     _q("SELECT COALESCE(SUM(ram_gb),0) c FROM virtual_inventory "+dw, dp)['c'],
+        'total_storage': _q("SELECT COALESCE(SUM(storage_gb),0) c FROM virtual_inventory "+dw, dp)['c'],
+        'by_owner':  query("SELECT COALESCE(owner,'Unknown') owner, COUNT(*) cnt, COALESCE(SUM(vcpu),0) vcpu, COALESCE(SUM(ram_gb),0) ram FROM virtual_inventory "+dw+" GROUP BY owner ORDER BY cnt DESC LIMIT 8", dp) or [],
+        'by_host':   query("SELECT COALESCE(host_server,'Unknown') host, COUNT(*) cnt FROM virtual_inventory "+dw+" GROUP BY host_server ORDER BY cnt DESC LIMIT 6", dp) or [],
+        'by_env':    query("SELECT COALESCE(environment,'Unknown') env, COUNT(*) cnt FROM virtual_inventory "+dw+" GROUP BY environment ORDER BY cnt DESC", dp) or [],
+        'by_hyp':    query("SELECT COALESCE(hypervisor,'Unknown') hyp, COUNT(*) cnt FROM virtual_inventory "+dw+" GROUP BY hypervisor ORDER BY cnt DESC LIMIT 5", dp) or [],
+    }
+    return render_template('virtual/list.html', rows=rows, search=search, status=status, dash=dash)"""
+
+assert old2 in c
+c = c.replace(old2, new2)
+
+with open('/home/claude/inv_v4/app.py','w') as f:
+    f.write(c)
+print("OK")
+PY
+Output
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GPU INVENTORY
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.route('/gpu')
+def gpu_list():
+    search       = request.args.get('search', '').strip()
+    owner_search = request.args.get('owner_search', '').strip()
+    model_search = request.args.get('model_search', '').strip()
+    status       = request.args.get('status', '')
+ 
+    # Full inventory table
+    sql = "SELECT * FROM gpu_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (gpu_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR host_server LIKE %s OR assigned_to LIKE %s)"
+        params += ['%'+search+'%'] * 5
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+ 
+    # Owner/Model dashboard filter
+    dash_conds  = ["assigned_to IS NOT NULL", "assigned_to != ''"]
+    dash_params = []
+    if owner_search:
+        dash_conds.append("assigned_to LIKE %s")
+        dash_params.append('%'+owner_search+'%')
+    if model_search:
+        dash_conds.append("model LIKE %s")
+        dash_params.append('%'+model_search+'%')
+    dash_where = "WHERE " + " AND ".join(dash_conds)
+ 
+    owner_sql = (
+        "SELECT assigned_to AS owner, COUNT(*) AS total_gpus, "
+        "SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active_gpus, "
+        "GROUP_CONCAT(DISTINCT model ORDER BY model SEPARATOR ', ') AS models, "
+        "GROUP_CONCAT(DISTINCT manufacturer ORDER BY manufacturer SEPARATOR ', ') AS manufacturers, "
+        "GROUP_CONCAT(DISTINCT environment ORDER BY environment SEPARATOR ', ') AS environments, "
+        "COALESCE(SUM(vram_gb),0) AS total_vram, "
+        "COALESCE(SUM(tdp_watts),0) AS total_tdp "
+        "FROM gpu_inventory " + dash_where + " "
+        "GROUP BY assigned_to ORDER BY total_gpus DESC"
+    )
+    owner_rows = query(owner_sql, dash_params or None) or []
+ 
+    model_sql = (
+        "SELECT model, manufacturer, COUNT(*) AS total_gpus, "
+        "SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active_gpus, "
+        "GROUP_CONCAT(DISTINCT assigned_to ORDER BY assigned_to SEPARATOR ', ') AS owners, "
+        "COALESCE(MAX(vram_gb),0) AS vram_gb, "
+        "COALESCE(MAX(cuda_cores),0) AS cuda_cores, "
+        "COALESCE(MAX(tensor_cores),0) AS tensor_cores, "
+        "COALESCE(MAX(tdp_watts),0) AS tdp_watts "
+        "FROM gpu_inventory " + dash_where + " "
+        "GROUP BY model, manufacturer ORDER BY total_gpus DESC"
+    )
+    model_rows = query(model_sql, dash_params or None) or []
+ 
+    kpi_sql = (
+        "SELECT COUNT(*) AS total, COALESCE(SUM(vram_gb),0) AS vram, "
+        "COUNT(DISTINCT assigned_to) AS owners, COUNT(DISTINCT model) AS models "
+        "FROM gpu_inventory " + dash_where
+    )
+    kpi = query(kpi_sql, dash_params or None, fetchone=True) or {}
+ 
+    all_owners = query("SELECT DISTINCT assigned_to FROM gpu_inventory WHERE assigned_to IS NOT NULL AND assigned_to != '' ORDER BY assigned_to") or []
+    all_models = query("SELECT DISTINCT model, manufacturer FROM gpu_inventory WHERE model IS NOT NULL AND model != '' ORDER BY model") or []
+ 
+    def _q(s, p=None): return query(s, p, fetchone=True) or {}
+    gpu_stats = {
+        'total':         (_q("SELECT COUNT(*) as c FROM gpu_inventory"))['c'],
+        'active':        (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='active'"))['c'],
+        'faulty':        (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='faulty'"))['c'],
+        'maintenance':   (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='maintenance'"))['c'],
+        'inactive':      (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='inactive'"))['c'],
+        'decommissioned':(_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='decommissioned'"))['c'],
+        'total_vram_gb': (_q("SELECT COALESCE(SUM(vram_gb),0) as c FROM gpu_inventory WHERE status NOT IN ('decommissioned')"))['c'],
+        'total_tdp_kw':  (_q("SELECT COALESCE(ROUND(SUM(tdp_watts)/1000,1),0) as c FROM gpu_inventory WHERE status='active'"))['c'],
+        'nvidia_count':  (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE manufacturer='NVIDIA'"))['c'],
+        'amd_count':     (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE manufacturer='AMD'"))['c'],
+        'intel_count':   (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE manufacturer='Intel'"))['c'],
+        'prod_count':    (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE environment='production'"))['c'],
+        'dev_count':     (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE environment='development'"))['c'],
+        'staging_count': (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE environment='staging'"))['c'],
+        'test_count':    (_q("SELECT COUNT(*) as c FROM gpu_inventory WHERE environment='testing'"))['c'],
+        'purpose_breakdown': query("SELECT purpose, COUNT(*) as cnt FROM gpu_inventory WHERE purpose IS NOT NULL AND purpose != '' GROUP BY purpose ORDER BY cnt DESC LIMIT 6") or [],
+        'host_breakdown': query("SELECT host_server, COUNT(*) as cnt, SUM(vram_gb) as total_vram FROM gpu_inventory WHERE host_server IS NOT NULL AND host_server != '' GROUP BY host_server ORDER BY cnt DESC LIMIT 6") or [],
+        'recent': query("SELECT gpu_name, manufacturer, model, vram_gb, status, created_at FROM gpu_inventory ORDER BY created_at DESC LIMIT 5") or [],
+    }
+ 
+    return render_template(
+        'gpu/list.html',
+        rows=rows, search=search, status=status,
+        gpu_stats=gpu_stats,
+        owner_rows=owner_rows, model_rows=model_rows, kpi=kpi,
+        owner_search=owner_search, model_search=model_search,
+        all_owners=all_owners, all_models=all_models,
+    )
+ *******************************************
+
+gpu/list.html ---> updated
+{% extends 'base.html' %}
+{% block title %}GPU Inventory{% endblock %}
+{% block page_title %}GPU Inventory{% endblock %}
+ 
+{% block topbar_action %}
+  <a href="{{ url_for('gpu_add') }}" class="btn-add">+ Add GPU</a>
+{% endblock %}
+ 
+{% block content %}
+ 
+<!-- ═══════════════════════════════════════════════════════════
+     OWNER / MODEL DASHBOARD
+════════════════════════════════════════════════════════════ -->
+<div class="om-dashboard">
+ 
+  <!-- Search bar -->
+  <form method="get" class="om-search-form" id="omSearchForm">
+    <div class="om-search-wrap">
+      <div class="om-search-group">
+        <span class="om-search-icon">👤</span>
+        <input
+          type="text"
+          name="owner_search"
+          id="ownerInput"
+          value="{{ owner_search }}"
+          placeholder="Search by owner / team…"
+          class="om-search-input"
+          autocomplete="off"
+          list="ownerList"
+        />
+        <datalist id="ownerList">
+          {% for o in all_owners %}
+            <option value="{{ o.assigned_to }}">
+          {% endfor %}
+        </datalist>
+        {% if owner_search %}
+          <a href="{{ url_for('gpu_list', model_search=model_search) }}" class="om-clear-btn" title="Clear owner">✕</a>
+        {% endif %}
+      </div>
+ 
+      <div class="om-search-divider">+</div>
+ 
+      <div class="om-search-group">
+        <span class="om-search-icon">◧</span>
+        <input
+          type="text"
+          name="model_search"
+          id="modelInput"
+          value="{{ model_search }}"
+          placeholder="Search by GPU model…"
+          class="om-search-input"
+          autocomplete="off"
+          list="modelList"
+        />
+        <datalist id="modelList">
+          {% for m in all_models %}
+            <option value="{{ m.model }}">
+          {% endfor %}
+        </datalist>
+        {% if model_search %}
+          <a href="{{ url_for('gpu_list', owner_search=owner_search) }}" class="om-clear-btn" title="Clear model">✕</a>
+        {% endif %}
+      </div>
+ 
+      <button type="submit" class="om-search-btn">Search</button>
+      {% if owner_search or model_search %}
+        <a href="{{ url_for('gpu_list') }}" class="om-reset-btn">Reset</a>
+      {% endif %}
+    </div>
+ 
+    <!-- Active filter pills -->
+    {% if owner_search or model_search %}
+    <div class="om-active-filters">
+      {% if owner_search %}
+        <span class="filter-pill pill-owner">👤 {{ owner_search }}</span>
+      {% endif %}
+      {% if model_search %}
+        <span class="filter-pill pill-model">◧ {{ model_search }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </form>
+ 
+  <!-- KPI summary row (filtered) -->
+  <div class="om-kpi-strip">
+    <div class="om-kpi-item">
+      <span class="om-kpi-num">{{ kpi.total or 0 }}</span>
+      <span class="om-kpi-lbl">GPUs Matched</span>
+    </div>
+    <div class="om-kpi-sep">|</div>
+    <div class="om-kpi-item">
+      <span class="om-kpi-num">{{ kpi.owners or 0 }}</span>
+      <span class="om-kpi-lbl">Owners / Teams</span>
+    </div>
+    <div class="om-kpi-sep">|</div>
+    <div class="om-kpi-item">
+      <span class="om-kpi-num">{{ kpi.models or 0 }}</span>
+      <span class="om-kpi-lbl">Distinct Models</span>
+    </div>
+    <div class="om-kpi-sep">|</div>
+    <div class="om-kpi-item">
+      <span class="om-kpi-num">{{ kpi.vram or 0 }}<small> GB</small></span>
+      <span class="om-kpi-lbl">Total VRAM</span>
+    </div>
+  </div>
+ 
+  <!-- Two-column: Owner cards + Model cards -->
+  <div class="om-split">
+ 
+    <!-- ── Owner cards ──────────────────────────────────────── -->
+    <div class="om-panel">
+      <div class="om-panel-header">
+        <span class="om-panel-icon">👤</span>
+        <span class="om-panel-title">By Owner / Team</span>
+        <span class="om-panel-count">{{ owner_rows|length }}</span>
+      </div>
+ 
+      {% if owner_rows %}
+        <div class="om-cards">
+          {% for o in owner_rows %}
+          <div class="om-owner-card {% if loop.index <= 3 %}top-card{% endif %}">
+            <div class="om-card-top">
+              <div class="om-avatar">{{ o.owner[0]|upper }}</div>
+              <div class="om-card-info">
+                <div class="om-card-name">{{ o.owner }}</div>
+                <div class="om-card-sub">{{ o.environments or '—' }}</div>
+              </div>
+              <div class="om-card-badge">
+                <span class="om-gpu-count">{{ o.total_gpus }}</span>
+                <span class="om-gpu-lbl">GPU{% if o.total_gpus != 1 %}s{% endif %}</span>
+              </div>
+            </div>
+ 
+            <!-- Mini progress bar: active vs total -->
+            {% set act_pct = ((o.active_gpus / o.total_gpus) * 100)|int if o.total_gpus else 0 %}
+            <div class="om-prog-wrap">
+              <div class="om-prog-bar" style="width:{{ act_pct }}%"></div>
+            </div>
+            <div class="om-prog-labels">
+              <span>{{ o.active_gpus }} active</span>
+              <span>{{ act_pct }}%</span>
+            </div>
+ 
+            <div class="om-card-specs">
+              <div class="om-spec-chip">
+                <span class="om-spec-icon">▦</span>{{ o.total_vram }} GB VRAM
+              </div>
+              <div class="om-spec-chip">
+                <span class="om-spec-icon">⚡</span>{{ o.total_tdp }} W
+              </div>
+            </div>
+ 
+            <div class="om-card-models">
+              {% for mdl in (o.models or '').split(', ') %}
+                {% if mdl %}<span class="om-model-tag">{{ mdl }}</span>{% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="om-empty">
+          <div class="om-empty-icon">👤</div>
+          <div>No owners found{% if owner_search %} matching <strong>"{{ owner_search }}"</strong>{% endif %}</div>
+        </div>
+      {% endif %}
+    </div>
+ 
+    <!-- ── Model cards ──────────────────────────────────────── -->
+    <div class="om-panel">
+      <div class="om-panel-header">
+        <span class="om-panel-icon">◧</span>
+        <span class="om-panel-title">By GPU Model</span>
+        <span class="om-panel-count">{{ model_rows|length }}</span>
+      </div>
+ 
+      {% if model_rows %}
+        <div class="om-cards">
+          {% for m in model_rows %}
+          <div class="om-model-card">
+            <div class="om-card-top">
+              <!-- Manufacturer badge -->
+              <div class="om-mfr-badge {% if m.manufacturer == 'NVIDIA' %}mfr-nv{% elif m.manufacturer == 'AMD' %}mfr-amd{% elif m.manufacturer == 'Intel' %}mfr-intel{% else %}mfr-other{% endif %}">
+                {{ m.manufacturer[0] if m.manufacturer else '?' }}
+              </div>
+              <div class="om-card-info">
+                <div class="om-card-name">{{ m.model or 'Unknown Model' }}</div>
+                <div class="om-card-sub">
+                  {% if m.manufacturer == 'NVIDIA' %}<span class="vendor-pill vendor-nvidia">NVIDIA</span>
+                  {% elif m.manufacturer == 'AMD'   %}<span class="vendor-pill vendor-amd">AMD</span>
+                  {% elif m.manufacturer == 'Intel' %}<span class="vendor-pill vendor-intel">Intel</span>
+                  {% else %}{{ m.manufacturer or '—' }}{% endif %}
+                </div>
+              </div>
+              <div class="om-card-badge">
+                <span class="om-gpu-count">{{ m.total_gpus }}</span>
+                <span class="om-gpu-lbl">GPU{% if m.total_gpus != 1 %}s{% endif %}</span>
+              </div>
+            </div>
+ 
+            {% set act_pct = ((m.active_gpus / m.total_gpus) * 100)|int if m.total_gpus else 0 %}
+            <div class="om-prog-wrap">
+              <div class="om-prog-bar" style="width:{{ act_pct }}%"></div>
+            </div>
+            <div class="om-prog-labels">
+              <span>{{ m.active_gpus }} active</span>
+              <span>{{ act_pct }}%</span>
+            </div>
+ 
+            <!-- Spec grid -->
+            <div class="om-spec-grid">
+              {% if m.vram_gb %}
+              <div class="om-spec-box">
+                <span class="om-spec-val">{{ m.vram_gb }}</span>
+                <span class="om-spec-key">GB VRAM</span>
+              </div>
+              {% endif %}
+              {% if m.cuda_cores %}
+              <div class="om-spec-box">
+                <span class="om-spec-val">{{ '{:,}'.format(m.cuda_cores) }}</span>
+                <span class="om-spec-key">CUDA Cores</span>
+              </div>
+              {% endif %}
+              {% if m.tensor_cores %}
+              <div class="om-spec-box">
+                <span class="om-spec-val">{{ m.tensor_cores }}</span>
+                <span class="om-spec-key">Tensor Cores</span>
+              </div>
+              {% endif %}
+              {% if m.tdp_watts %}
+              <div class="om-spec-box">
+                <span class="om-spec-val">{{ m.tdp_watts }}</span>
+                <span class="om-spec-key">TDP (W)</span>
+              </div>
+              {% endif %}
+            </div>
+ 
+            <!-- Owners who use this model -->
+            {% if m.owners %}
+            <div class="om-card-owners-label">Used by:</div>
+            <div class="om-card-models">
+              {% for own in (m.owners or '').split(', ') %}
+                {% if own %}<span class="om-owner-tag">{{ own }}</span>{% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="om-empty">
+          <div class="om-empty-icon">◧</div>
+          <div>No models found{% if model_search %} matching <strong>"{{ model_search }}"</strong>{% endif %}</div>
+        </div>
+      {% endif %}
+    </div>
+ 
+  </div><!-- end om-split -->
+</div><!-- end om-dashboard -->
+ 
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION DIVIDER
+════════════════════════════════════════════════════════════ -->
+<div class="section-divider" style="margin-top:12px;">
+  <span class="section-divider-label">◧ Full GPU Inventory Table</span>
+</div>
+ 
+<!-- ═══════════════════════════════════════════════════════════
+     EXISTING KPI DASHBOARD (condensed)
+════════════════════════════════════════════════════════════ -->
+<div class="gpu-kpi-row" style="margin-bottom:18px;">
+  <div class="gpu-kpi-card kpi-total">
+    <div class="kpi-icon">◧</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.total }}</div>
+      <div class="kpi-label">Total GPUs</div>
+    </div>
+  </div>
+  <div class="gpu-kpi-card kpi-active">
+    <div class="kpi-icon">●</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.active }}</div>
+      <div class="kpi-label">Active</div>
+    </div>
+  </div>
+  <div class="gpu-kpi-card kpi-faulty {% if gpu_stats.faulty > 0 %}kpi-alert{% endif %}">
+    <div class="kpi-icon">⚠</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.faulty }}</div>
+      <div class="kpi-label">Faulty</div>
+    </div>
+  </div>
+  <div class="gpu-kpi-card kpi-maintenance">
+    <div class="kpi-icon">⚙</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.maintenance }}</div>
+      <div class="kpi-label">Maintenance</div>
+    </div>
+  </div>
+  <div class="gpu-kpi-card kpi-vram">
+    <div class="kpi-icon">▦</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.total_vram_gb }}<span class="kpi-unit">GB</span></div>
+      <div class="kpi-label">Total VRAM</div>
+    </div>
+  </div>
+  <div class="gpu-kpi-card kpi-power">
+    <div class="kpi-icon">⚡</div>
+    <div class="kpi-body">
+      <div class="kpi-value">{{ gpu_stats.total_tdp_kw }}<span class="kpi-unit">kW</span></div>
+      <div class="kpi-label">Active Power</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Filter + Table -->
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search GPU name, model, host, owner..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="faulty"         {% if status=='faulty' %}selected{% endif %}>Faulty</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('gpu_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+ 
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Name</th><th>Manufacturer</th><th>Model</th>
+        <th>VRAM</th><th>CUDA / Tensor</th><th>TDP (W)</th>
+        <th>Host</th><th>Slot</th><th>Purpose</th>
+        <th>Env</th><th>Assigned To</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.gpu_name }}</td>
+        <td>
+          {% if r.manufacturer == 'NVIDIA' %}<span class="vendor-pill vendor-nvidia">NVIDIA</span>
+          {% elif r.manufacturer == 'AMD'   %}<span class="vendor-pill vendor-amd">AMD</span>
+          {% elif r.manufacturer == 'Intel' %}<span class="vendor-pill vendor-intel">Intel</span>
+          {% else %}{{ r.manufacturer or '—' }}{% endif %}
+        </td>
+        <td>{{ r.model or '—' }}</td>
+        <td>{{ r.vram_gb or '?' }} GB</td>
+        <td class="mono">{{ r.cuda_cores or '—' }}{% if r.tensor_cores %} / {{ r.tensor_cores }}{% endif %}</td>
+        <td>{{ r.tdp_watts or '—' }}</td>
+        <td class="mono">{{ r.host_server or '—' }}</td>
+        <td>{{ r.slot_position or '—' }}</td>
+        <td>{{ r.purpose or '—' }}</td>
+        <td><span class="badge badge-env-{{ r.environment }}">{{ r.environment }}</span></td>
+        <td>{{ r.assigned_to or '—' }}</td>
+        <td><span class="badge badge-gpu-{{ r.status }}">{{ r.status }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('gpu_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('gpu_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="14" class="no-data">No GPU records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+ 
+<script>
+// Auto-submit on typing with debounce
+['ownerInput','modelInput'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var timer;
+  el.addEventListener('input', function() {
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      document.getElementById('omSearchForm').submit();
+    }, 500);
+  });
+});
+</script>
+{% endblock %}
+
+**********************************************8
+
+style.css -> updated
+
+/* ─── RESET & BASE ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --bg2:      #161b22;
+  --bg3:      #21262d;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --accent:   #58a6ff;
+  --green:    #3fb950;
+  --yellow:   #d29922;
+  --red:      #f85149;
+  --purple:   #bc8cff;
+  --orange:   #ffa657;
+  --sidebar-w: 220px;
+  --radius:   6px;
+}
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ─── LAYOUT ────────────────────────────────────────────────────────────────── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ─── SIDEBAR ───────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.brand-icon { font-size: 22px; color: var(--accent); }
+.brand-text  { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+
+.sidebar-nav { padding: 12px 8px; flex: 1; }
+
+.nav-section {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  padding: 14px 8px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(88,166,255,0.15); color: var(--accent); }
+.nav-icon { font-size: 15px; }
+
+.sidebar-footer {
+  padding: 12px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── MAIN AREA ─────────────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.content { padding: 24px 28px; flex: 1; }
+
+/* ─── BUTTONS ───────────────────────────────────────────────────────────────── */
+.btn-add {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: 13px;
+  transition: opacity 0.15s;
+}
+.btn-add:hover { opacity: 0.85; }
+
+.btn-submit {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Syne', sans-serif;
+  transition: opacity 0.15s;
+}
+.btn-submit:hover { opacity: 0.85; }
+
+.btn-cancel {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  transition: color 0.15s;
+}
+.btn-cancel:hover { color: var(--text); }
+
+.btn-filter {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  transition: border-color 0.15s;
+}
+.btn-filter:hover { border-color: var(--accent); }
+
+.btn-reset {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+.btn-reset:hover { color: var(--text); }
+
+/* ─── FLASH MESSAGES ────────────────────────────────────────────────────────── */
+.flash-wrapper { padding: 0 28px 0; margin-top: 16px; }
+.flash {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  font-weight: 600;
+  border-left: 4px solid;
+}
+.flash-success { background: rgba(63,185,80,0.1);  border-color: var(--green);  color: var(--green); }
+.flash-warning  { background: rgba(248,81,73,0.1);  border-color: var(--red);    color: var(--red); }
+.flash-danger   { background: rgba(248,81,73,0.1);  border-color: var(--red);    color: var(--red); }
+.flash-info     { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--accent); }
+
+/* ─── FILTER BAR ────────────────────────────────────────────────────────────── */
+.filter-bar { margin-bottom: 20px; }
+.filter-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.filter-input, .filter-select {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.filter-input { min-width: 280px; }
+.filter-input:focus, .filter-select:focus { border-color: var(--accent); }
+.filter-select option { background: var(--bg2); }
+
+/* ─── TABLE ─────────────────────────────────────────────────────────────────── */
+.table-wrapper {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.data-table th {
+  background: var(--bg3);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--bg3); }
+
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.no-data { text-align: center; color: var(--muted); padding: 40px !important; }
+.text-warn { color: var(--yellow); }
+.alert-text { color: var(--red); }
+.link { color: var(--accent); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+
+/* ─── ACTIONS ───────────────────────────────────────────────────────────────── */
+.actions { white-space: nowrap; }
+.action-edit {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  margin-right: 8px;
+  font-size: 12px;
+}
+.action-edit:hover { text-decoration: underline; }
+
+.action-delete {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+  font-family: 'Syne', sans-serif;
+  padding: 0;
+}
+.action-delete:hover { text-decoration: underline; }
+
+/* ─── BADGES ────────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Physical status */
+.badge-active        { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-inactive      { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-maintenance   { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-decommissioned{ background: rgba(248,81,73,0.15);  color: var(--red);   }
+
+/* VM status */
+.badge-vm-running    { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-vm-stopped    { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-vm-suspended  { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-vm-deleted    { background: rgba(139,148,158,0.15);color: var(--muted); }
+
+/* VM environment */
+.badge-env-production  { background: rgba(248,81,73,0.12);  color: var(--red);    }
+.badge-env-staging     { background: rgba(210,153,34,0.12); color: var(--yellow); }
+.badge-env-development { background: rgba(88,166,255,0.12); color: var(--accent); }
+.badge-env-testing     { background: rgba(188,140,255,0.12);color: var(--purple); }
+
+/* License status */
+.badge-lic-active          { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-lic-expired         { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-lic-pending_renewal { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-lic-cancelled       { background: rgba(139,148,158,0.15);color: var(--muted); }
+
+/* Warranty status */
+.badge-war-active   { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-war-expired  { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-war-extended { background: rgba(88,166,255,0.12); color: var(--accent); }
+.badge-war-voided   { background: rgba(139,148,158,0.15);color: var(--muted); }
+
+/* Vendor status */
+.badge-vend-active      { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-vend-inactive    { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-vend-blacklisted { background: rgba(248,81,73,0.15);  color: var(--red);   }
+
+/* Vendor category */
+.badge-cat-hardware { background: rgba(255,166,87,0.15); color: var(--orange); }
+.badge-cat-software { background: rgba(88,166,255,0.15); color: var(--accent); }
+.badge-cat-cloud    { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-cat-support  { background: rgba(188,140,255,0.15);color: var(--purple); }
+.badge-cat-services { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+/* ─── DASHBOARD ─────────────────────────────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+
+.stat-icon { font-size: 28px; }
+.stat-num  { font-size: 32px; font-weight: 800; line-height: 1; }
+.stat-label{ font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); margin-top: 4px; text-transform: uppercase; }
+.stat-sub  { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+.card-blue   { border-color: rgba(88,166,255,0.4);  }
+.card-blue .stat-icon { color: var(--accent); }
+.card-green  { border-color: rgba(63,185,80,0.4);   }
+.card-green .stat-icon { color: var(--green); }
+.card-yellow { border-color: rgba(210,153,34,0.4);  }
+.card-yellow .stat-icon { color: var(--yellow); }
+.card-red    { border-color: rgba(248,81,73,0.4);   }
+.card-red .stat-icon { color: var(--red); }
+.card-purple { border-color: rgba(188,140,255,0.4); }
+.card-purple .stat-icon { color: var(--purple); }
+
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.quick-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.quick-btn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.quick-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── FORM ──────────────────────────────────────────────────────────────────── */
+.form-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px;
+  max-width: 1000px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.form-full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+
+.form-input, .form-select, .form-textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-select option { background: var(--bg3); }
+.form-textarea { resize: vertical; }
+
+.form-actions { display: flex; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+/* ─── SCROLLBAR ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── GPU & STORAGE ADDITIONS ────────────────────────────────────────────────── */
+
+/* Dashboard new cards */
+.card-teal  { border-color: rgba(32,201,151,0.4); }
+.card-teal .stat-icon { color: #20c997; }
+.card-cyan  { border-color: rgba(23,162,184,0.4); }
+.card-cyan .stat-icon { color: #17a2b8; }
+
+/* GPU status badges */
+.badge-gpu-active        { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-gpu-inactive      { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-gpu-faulty        { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-gpu-maintenance   { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-gpu-decommissioned{ background: rgba(139,148,158,0.12);color: var(--muted); }
+
+/* Storage type badges */
+.badge-stg-ssd    { background: rgba(88,166,255,0.15);  color: var(--accent); }
+.badge-stg-hdd    { background: rgba(139,148,158,0.15); color: var(--muted);  }
+.badge-stg-nvme   { background: rgba(32,201,151,0.15);  color: #20c997;       }
+.badge-stg-san    { background: rgba(188,140,255,0.15); color: var(--purple); }
+.badge-stg-nas    { background: rgba(255,166,87,0.15);  color: var(--orange); }
+.badge-stg-tape   { background: rgba(210,153,34,0.15);  color: var(--yellow); }
+.badge-stg-object { background: rgba(23,162,184,0.15);  color: #17a2b8;       }
+.badge-stg-cloud  { background: rgba(63,185,80,0.15);   color: var(--green);  }
+
+/* Storage status badges */
+.badge-stg-status-active        { background: rgba(63,185,80,0.15);  color: var(--green); }
+.badge-stg-status-inactive      { background: rgba(139,148,158,0.15);color: var(--muted); }
+.badge-stg-status-faulty        { background: rgba(248,81,73,0.15);  color: var(--red);   }
+.badge-stg-status-degraded      { background: rgba(210,153,34,0.15); color: var(--yellow);}
+.badge-stg-status-maintenance   { background: rgba(88,166,255,0.15); color: var(--accent);}
+.badge-stg-status-decommissioned{ background: rgba(139,148,158,0.12);color: var(--muted); }
+
+/* GPU vendor pills */
+.vendor-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.vendor-nvidia { background: rgba(118,185,0,0.15);   color: #76b900; }
+.vendor-amd    { background: rgba(237,28,36,0.15);   color: #ed1c24; }
+.vendor-intel  { background: rgba(0,113,197,0.15);   color: #0071c5; }
+
+/* Storage usage bar */
+.usage-bar-wrap {
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+  width: 80px;
+  margin-bottom: 3px;
+}
+.usage-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.usage-text {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Form section titles */
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GPU DASHBOARD STYLES
+═══════════════════════════════════════════════════════════════════════════ */
+
+.gpu-dashboard { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; }
+
+/* ── KPI Row ─────────────────────────────────────────────────────────────── */
+.gpu-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.gpu-kpi-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.gpu-kpi-card:hover { transform: translateY(-1px); }
+.gpu-kpi-card.kpi-alert {
+  border-color: rgba(248,81,73,0.5);
+  background: rgba(248,81,73,0.04);
+  animation: pulse-border 2s infinite;
+}
+@keyframes pulse-border {
+  0%,100% { border-color: rgba(248,81,73,0.5); }
+  50%      { border-color: rgba(248,81,73,0.9); }
+}
+
+.kpi-icon { font-size: 22px; flex-shrink: 0; }
+.kpi-value { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+.kpi-unit  { font-size: 13px; font-weight: 600; margin-left: 2px; opacity: 0.7; }
+.kpi-label { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+.kpi-total      .kpi-icon { color: var(--accent);  }
+.kpi-total      .kpi-value{ color: var(--accent);  }
+.kpi-active     .kpi-icon { color: var(--green);   }
+.kpi-active     .kpi-value{ color: var(--green);   }
+.kpi-faulty     .kpi-icon { color: var(--red);     }
+.kpi-faulty     .kpi-value{ color: var(--red);     }
+.kpi-maintenance.kpi-icon { color: var(--yellow);  }
+.kpi-maintenance.kpi-value{ color: var(--yellow);  }
+.kpi-vram       .kpi-icon { color: var(--purple);  }
+.kpi-vram       .kpi-value{ color: var(--purple);  }
+.kpi-power      .kpi-icon { color: var(--orange);  }
+.kpi-power      .kpi-value{ color: var(--orange);  }
+
+/* ── Charts Row ──────────────────────────────────────────────────────────── */
+.gpu-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.gpu-chart-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.chart-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.chart-empty {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Manufacturer chart */
+.mfr-chart { display: flex; flex-direction: column; gap: 12px; }
+.mfr-row   { display: flex; align-items: center; gap: 10px; }
+.mfr-label { font-size: 12px; font-weight: 700; width: 52px; flex-shrink: 0; }
+.mfr-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.mfr-bar { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.mfr-nvidia { background: #76b900; }
+.mfr-amd    { background: #ed1c24; }
+.mfr-intel  { background: #0071c5; }
+.mfr-count  { font-size: 12px; font-weight: 700; width: 24px; text-align: right; }
+.vendor-nvidia-text { color: #76b900; }
+.vendor-amd-text    { color: #ed1c24; }
+.vendor-intel-text  { color: #0071c5; }
+
+/* Environment chart */
+.env-legend { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.env-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.env-legend-item strong { margin-left: auto; font-size: 13px; }
+.env-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.env-dot-prod { background: var(--red);    }
+.env-dot-stg  { background: var(--yellow); }
+.env-dot-dev  { background: var(--accent); }
+.env-dot-tst  { background: var(--purple); }
+
+.env-stack-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  gap: 2px;
+}
+.env-seg { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+.env-seg-prod { background: var(--red);    }
+.env-seg-stg  { background: var(--yellow); }
+.env-seg-dev  { background: var(--accent); }
+.env-seg-tst  { background: var(--purple); }
+
+/* Purpose chart */
+.purpose-list { display: flex; flex-direction: column; gap: 11px; }
+.purpose-row  { display: flex; align-items: center; gap: 10px; }
+.purpose-name {
+  font-size: 11px;
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.purpose-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.purpose-bar  { height: 100%; background: linear-gradient(90deg, #20c997, #17a2b8); border-radius: 3px; transition: width 0.6s ease; }
+.purpose-count{ font-size: 12px; font-weight: 700; width: 20px; text-align: right; }
+
+/* Host breakdown */
+.host-list { display: flex; flex-direction: column; gap: 12px; }
+.host-row  { display: flex; align-items: center; gap: 10px; }
+.host-name {
+  font-size: 11px;
+  width: 90px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.host-gpu-pips { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.gpu-pip {
+  font-size: 14px;
+  color: #20c997;
+  line-height: 1;
+}
+.host-vram { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
+/* ── Bottom Row ──────────────────────────────────────────────────────────── */
+.gpu-bottom-row {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 12px;
+}
+
+/* Status pills */
+.status-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.status-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s;
+  flex: 1;
+  min-width: 52px;
+}
+.status-pill:hover { transform: translateY(-2px); opacity: 0.85; }
+.sp-num  { font-size: 22px; font-weight: 800; line-height: 1; }
+.sp-lbl  { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; }
+
+.sp-active      { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.sp-inactive    { background: rgba(139,148,158,0.1); color: var(--muted);  border: 1px solid rgba(139,148,158,0.3); }
+.sp-faulty      { background: rgba(248,81,73,0.12);  color: var(--red);    border: 1px solid rgba(248,81,73,0.3); }
+.sp-maintenance { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+.sp-decom       { background: rgba(139,148,158,0.08);color: var(--muted);  border: 1px solid rgba(139,148,158,0.2); }
+
+/* Health bar */
+.health-section { margin-top: 4px; }
+.health-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.health-label strong { color: var(--text); }
+.health-bar-track {
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.health-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+/* Mini table (recent) */
+.recent-card { overflow-x: auto; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mini-table th {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 0 10px 8px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.mini-table td {
+  padding: 9px 10px 9px 0;
+  border-bottom: 1px solid rgba(48,54,61,0.5);
+  vertical-align: middle;
+}
+.mini-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Section Divider ─────────────────────────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 18px;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.section-divider-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Responsive: collapse to 2-col on smaller screens ───────────────────── */
+@media (max-width: 1300px) {
+  .gpu-kpi-row     { grid-template-columns: repeat(3, 1fr); }
+  .gpu-charts-row  { grid-template-columns: 1fr 1fr; }
+  .gpu-bottom-row  { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .gpu-kpi-row    { grid-template-columns: 1fr 1fr; }
+  .gpu-charts-row { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OWNER / MODEL DASHBOARD
+═══════════════════════════════════════════════════════════════════════════ */
+
+.om-dashboard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* ── Search Form ────────────────────────────────────────────────────────── */
+.om-search-form { margin-bottom: 16px; }
+
+.om-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.om-search-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  gap: 8px;
+  flex: 1;
+  min-width: 220px;
+  transition: border-color 0.15s;
+}
+.om-search-group:focus-within { border-color: var(--accent); }
+
+.om-search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
+
+.om-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  padding: 9px 0;
+  flex: 1;
+  min-width: 0;
+}
+.om-search-input::placeholder { color: var(--muted); }
+
+.om-clear-btn {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.om-clear-btn:hover { color: var(--text); background: var(--border); }
+
+.om-search-divider {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.om-search-btn {
+  background: var(--accent);
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.om-search-btn:hover { opacity: 0.85; }
+
+.om-reset-btn {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+.om-reset-btn:hover { color: var(--text); }
+
+/* Active filter pills */
+.om-active-filters { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pill-owner { background: rgba(88,166,255,0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+.pill-model { background: rgba(32,201,151,0.12); color: #20c997;      border: 1px solid rgba(32,201,151,0.3); }
+
+/* ── KPI Strip ─────────────────────────────────────────────────────────── */
+.om-kpi-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 24px;
+  margin-bottom: 18px;
+}
+.om-kpi-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.om-kpi-num {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.om-kpi-num small { font-size: 14px; font-weight: 600; opacity: 0.7; }
+.om-kpi-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.om-kpi-sep { color: var(--border); font-size: 24px; padding: 0 8px; }
+
+/* ── Split Panels ──────────────────────────────────────────────────────── */
+.om-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.om-panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.om-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+.om-panel-icon  { font-size: 14px; }
+.om-panel-title { font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; flex: 1; }
+.om-panel-count {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.om-cards {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* ── Owner Card ─────────────────────────────────────────────────────────── */
+.om-owner-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.om-owner-card:hover { border-color: var(--accent); transform: translateX(2px); }
+.om-owner-card.top-card { border-color: rgba(88,166,255,0.3); }
+
+.om-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.om-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #0055cc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.om-card-info { flex: 1; min-width: 0; }
+.om-card-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.om-card-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.om-card-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(88,166,255,0.1);
+  border: 1px solid rgba(88,166,255,0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+.om-gpu-count { font-size: 20px; font-weight: 800; color: var(--accent); line-height: 1; }
+.om-gpu-lbl   { font-size: 9px;  font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+
+/* Progress bar */
+.om-prog-wrap {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.om-prog-bar  { height: 100%; background: linear-gradient(90deg, var(--green), #20c997); border-radius: 2px; transition: width 0.6s ease; }
+.om-prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+
+/* Spec chips */
+.om-card-specs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.om-spec-chip  {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.om-spec-icon { font-size: 10px; }
+
+/* Model tags (on owner cards) */
+.om-card-models { display: flex; flex-wrap: wrap; gap: 5px; }
+.om-model-tag {
+  background: rgba(32,201,151,0.1);
+  border: 1px solid rgba(32,201,151,0.25);
+  color: #20c997;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ── Model Card ─────────────────────────────────────────────────────────── */
+.om-model-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.om-model-card:hover { border-color: #20c997; transform: translateX(2px); }
+
+.om-mfr-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.mfr-nv    { background: rgba(118,185,0,0.15);  color: #76b900; border: 1px solid rgba(118,185,0,0.3); }
+.mfr-amd   { background: rgba(237,28,36,0.15);  color: #ed1c24; border: 1px solid rgba(237,28,36,0.3); }
+.mfr-intel { background: rgba(0,113,197,0.15);  color: #0071c5; border: 1px solid rgba(0,113,197,0.3); }
+.mfr-other { background: rgba(139,148,158,0.15);color: var(--muted); border: 1px solid var(--border); }
+
+/* Spec grid on model cards */
+.om-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 10px 0;
+}
+.om-spec-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.om-spec-val { font-size: 13px; font-weight: 800; color: var(--text); line-height: 1; }
+.om-spec-key { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+/* Owner tags on model cards */
+.om-card-owners-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.om-owner-tag {
+  background: rgba(88,166,255,0.08);
+  border: 1px solid rgba(88,166,255,0.2);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+}
+
+/* ── Empty State ────────────────────────────────────────────────────────── */
+.om-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.om-empty-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+.om-empty strong { color: var(--text); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .om-split { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .om-search-wrap { flex-direction: column; align-items: stretch; }
+  .om-kpi-strip   { flex-direction: column; gap: 12px; }
+  .om-kpi-sep     { display: none; }
+  .om-spec-grid   { grid-template-columns: repeat(2, 1fr); }
+}
+
+OK
