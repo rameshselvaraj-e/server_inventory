@@ -1763,3 +1763,83 @@ body {
 }
 
 OK
+
+###########################################################33
+def get_data():
+        conn = mysql.connector.connect(**DB_CONFIG)
+
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT owners, COALESCE( model, 'TOTAL GPU') AS model, SUM(no_of_gpu) AS total_gpu
+            FROM gpu_inventory
+            GROUP BY owners, model WITH ROLLUP;
+        """
+        cursor.execute(query)
+        data = cursor.fetchall()
+        conn.close()
+        return data
+
+@app.route('/gpu/dash')
+def gpu_dash():
+    data = get_data()
+    return render_template('gpu/dashboard.html', gpu_data=data)
+
+#########################################################33
+dashboard.html
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block title %}GPU Inventory{% endblock %}
+{% block page_title %}GPU Inventory{% endblock %}
+
+<head>
+    <meta charset="UTF-8">
+    <title>GPU Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+{% block content %}
+<div class="gpu-grid">
+    <h1>GPU Inventory Dashboard</h1>
+    <button><a href="{{ url_for('gpu_list') }}" class="btn-filter">GPU Home</a></button>
+
+  <div class="table-wrapper">
+  <table class="data-table">
+        <thead>
+          <tr>
+              <th>Owner</th>
+              <th>Model</th>
+              <th>Total GPUs</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for row in gpu_data %}
+            <tr class="{% if row.model == 'TOTAL GPU' %}total-row{% endif %}">
+                <td>{{ row.owners }}</td>
+                <td>{{ row.model }}</td>
+                <td>{{ row.total_gpu }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endblock %}
+
+#####################################
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search GPU name, model, host, assigned to..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="faulty"         {% if status=='faulty' %}selected{% endif %}>Faulty</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('gpu_list') }}" class="btn-reset">Reset</a>
+    <a href="{{ url_for('gpu_dash') }}" class="btn-filter">Dashboard</a>
+  </form>
+</div>
+
+
