@@ -1,0 +1,135 @@
+Create database:
+CREATE 
+---------------------------------------------------------
+Create Table:
+1) physical_inventory
+2) warranty_info
+3) virtual_inventory
+4) vendor_info
+5) license_inventory
+6) storage_inventory
+7) gpu_inventory       
+        
+  
+Table7: gpu_inventory
+---------------------------------------------------------
+mysql> CREATE TABLE gpu_inventory (id INT AUTO_INCREMENT PRIMARY KEY, server_name VARCHAR(100), gpu_product VARCHAR(100), gpu_model VARCHAR(255), gpu_memory VARCHAR(100), total_gpu VARCHAR(100), owners VARCHAR(150), gpu_id VARCHAR(255), status ENUM('ACTIVE', 'EXPIRED', 'REVOKED') NOT NULL DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+Query OK, 0 rows affected (0.31 sec)
+
+mysql> CREATE TABLE IF NOT EXISTS gpu_inventory (id INT AUTO_INCREMENT PRIMARY KEY, gpu_name VARCHAR(150) NOT NULL, asset_tag VARCHAR(50), manufacturer VARCHAR(100), model VARCHAR(150), serial_number VARCHAR(100), vram_gb INT, tdp_watts INT, slot_type VARCHAR(50), cuda_cores INT, tensor_cores INT, host_server VARCHAR(100), slot_position VARCHAR(50), ip_address VARCHAR(45), purpose VARCHAR(100), driver_version VARCHAR(50), firmware_version VARCHAR(50), environment ENUM('production','staging','development','testing') DEFAULT 'production', status ENUM('active','inactive','faulty','maintenance','decommissioned') DEFAULT 'active', purchase_date DATE, assigned_to VARCHAR(150), notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+Query OK, 0 rows affected (0.21 sec)
+
+mysql> 
+----------------------------------------------------------------------------------
+
+mysql> CREATE TABLE IF NOT EXISTS storage_inventory (id INT AUTO_INCREMENT PRIMARY KEY, device_name VARCHAR(150) NOT NULL, asset_tag VARCHAR(50), storage_type ENUM('SSD','HDD','NVMe','SAN','NAS','Tape','Object','Cloud') DEFAULT 'SSD', manufacturer VARCHAR(100), model VARCHAR(150), serial_number VARCHAR(100), capacity_tb DECIMAL(10,2), interface VARCHAR(50), form_factor VARCHAR(50), rpm INT, host_server VARCHAR(100), array_name VARCHAR(100), raid_group VARCHAR(50), mount_point VARCHAR(150), ip_address VARCHAR(45), filesystem VARCHAR(50), used_tb DECIMAL(10,2), iops INT, throughput_gbps DECIMAL(5,2), environment ENUM('production','staging','development','testing') DEFAULT 'production', status ENUM('active','inactive','faulty','degraded','maintenance','decommissioned') DEFAULT 'active', purchase_date DATE, assigned_to VARCHAR(150), notes TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+Query OK, 0 rows affected (0.18 sec)
+
+mysql>
+-------------------------------------------------------
+Table 6:
+mysql> CREATE TABLE storage_inventory (id INT AUTO_INCREMENT PRIMARY KEY, cluster_name VARCHAR(100) NOT NULL, ontap_version VARCHAR(50), node_name VARCHAR(100), Node_serialnumber VARCHAR(100), model VARCHAR(100), mgmt_ip VARCHAR(50), stg_size VARCHAR(100), stg_size_used VARCHAR(100), stg_size_avl VARCHAR(100), status ENUM('ONLINE', 'OFFLINE', 'DEGRADED') DEFAULT 'ONLINE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+Query OK, 0 rows affected (0.51 sec)
+
+mysql>
+
+-------------------------------------------------------
+
+-------------------------------------------------------
+mysql> create table vendor (id INTEGER PRIMARY KEY AUTO_INCREMENT, hostname TEXT NOT NULL, ipmi_ip_address TEXT, vendor TEXT, model TEXT, serial_number TEXT, location TEXT, purchase_date TEXT, warranty_start_date TEXT, warranty_end_date TEXT, support_contract TEXT, support_level TEXT, support_start TEXT, support_end TEXT, notes
+TEXT, create_at DATETIME DEFAULT NOW(), update_at DATETIME DEFAULT NOW() ON UPDATE NOW());
+Query OK, 0 rows affected (0.28 sec)
+
+mysql>
+
+mysql> INSERT INTO vendor (hostname, ipmi_ip_address, vendor, model, serial_number, location, purchase_date, warranty_start_date, warranty_end_date, support_contract, support_level, support_start, support_end, notes) VALUES ('web-01','192.168.1.10','Dell','R640','SN123451','DC-US-East','
+2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Primary web server');
+Query OK, 1 row affected (0.01 sec)
+
+mysql>
+
+
+INSERT INTO vendor (hostname, ipmi_ip_address, vendor, model, serial_number, location, purchase_date, warranty_start_date, warranty_end_date, support_contract, support_level, support_start, support_end, notes) VALUES
+('web-02','192.168.1.11','Dell','R640','SN123452','DC-US-East','2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Secondary web server'),
+('db-01','192.168.1.12','HPE','DL380-Proliant Gen10','SN123453','DC-US-West','2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Primary DB server'),
+('db-02','192.168.1.13','HPE','DL380-Proliant Gen10','SN123454','DC-US-East','2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Secondary DB server'),
+('app-01','192.168.1.14','Dell','R640','SN123455','DC-US-East','2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Primary Application server'),
+('app-02','192.168.1.15','Dell','R640','SN123456','DC-US-East','2023-02-10','2023-02-10','2026-02-10','ProSupport','ProSupport','2023-02-10','2026-02-10','Secondary Application server');
+
+---------------------------------------------------------
+
+INSERT INTO gpu_inventory (gpu_name, asset_tag, manufacturer, model, serial_number, vram_gb, tdp_watts, slot_type, cuda_cores, tensor_cores, host_server, slot_position, purpose, driver_version, environment, status, purchase_date, assigned_to) VALUES
+('gpu-ml-001', 'GPU-001', 'NVIDIA', 'A100 80GB SXM4', 'SN-GPU-A100-001', 80, 400, 'SXM4', 6912, 432, 'srv-prod-001', 'SXM Slot 1', 'ML training', '535.104.12', 'production', 'active', '2023-01-15', 'ml-team'),
+('gpu-ml-002', 'GPU-002', 'NVIDIA', 'A100 80GB SXM4', 'SN-GPU-A100-002', 80, 400, 'SXM4', 6912, 432, 'srv-prod-001', 'SXM Slot 2', 'ML training', '535.104.12', 'production', 'active', '2023-01-15', 'ml-team'),
+('gpu-inf-001', 'GPU-003', 'NVIDIA', 'RTX 4090', 'SN-GPU-4090-001', 24, 450, 'PCIe 4.0 x16', 16384, 512, 'srv-prod-002', 'Slot 1', 'inference', '536.23', 'production', 'active', '2023-06-10', 'ai-team'),
+('gpu-dev-001', 'GPU-004', 'AMD', 'Radeon RX 7900 XTX', 'SN-GPU-AMD-001', 24, 355, 'PCIe 4.0 x16', 12288, NULL, 'srv-dev-001', 'Slot 1', 'rendering', '23.9.1', 'development', 'active', '2023-03-20', 'dev-team');
+
+--------------------------------------------------------------
+
+INSERT INTO storage_inventory (device_name, asset_tag, storage_type, manufacturer, model, serial_number, capacity_tb, interface, form_factor, host_server, array_name, raid_group, mount_point, ip_address, filesystem, used_tb, iops, throughput_gbps, environment, status, purchase_date, assigned_to) VALUES
+('nas-prod-01', 'STG-001', 'NAS', 'NetApp', 'AFF A400', 'SN-NAS-001', 200.00, 'NFS/SMB', 'Rack 2U', NULL, 'nas-prod-01', 'RAID-DP', '/mnt/nas/prod', '10.10.5.10', 'WAFL', 120.50, 250000, 12.00, 'production', 'active', '2022-08-01', 'storage-team'),
+('san-prod-01', 'STG-002', 'SAN', 'Pure Storage', 'FlashArray //X70', 'SN-SAN-001', 500.00, 'FC/iSCSI', 'Rack 3U', NULL, 'san-prod-01', 'RAID-3D', NULL, '10.10.5.20', NULL, 380.00, 1500000, 32.00, 'production', 'active', '2022-05-15', 'storage-team'),
+('nvme-srv-001', 'STG-003', 'NVMe', 'Samsung', 'PM9A3 7.68TB', 'SN-NVM-001', 7.68, 'NVMe PCIe 4.0', 'U.2 2.5"', 'srv-prod-001', NULL, 'RAID-5', '/data', NULL, 'XFS', 4.20, 800000, 6.90, 'production', 'active', '2022-03-15', 'ops-team'),
+('hdd-backup-01', 'STG-004', 'HDD', 'Seagate', 'Exos X20 20TB', 'SN-HDD-001', 20.00, 'SAS 12Gb', '3.5"', 'srv-dev-001', NULL, 'JBOD', '/backup', NULL, 'ext4', 14.00, 210, 0.25, 'production', 'active', '2021-11-20', 'backup-team');
+
+--------------------------------------------------
+
+Rename fileds:
+mysql> ALTER TABLE gpu_inventory RENAME COLUMN gpu_name TO server_name;
+Query OK, 0 rows affected (0.42 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql>
+
+
+
+------------------------------------------------
+Remove a column.
+mysql> ALTER TABLE gpu_inventory DROP COLUMN asset_tag;
+Query OK, 0 rows affected (0.24 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql>
+
+--------------------------------------------------
+Arrange Table fileds:
+
+mysql> ALTER TABLE gpu_inventory MODIFY COLUMN ip_address varchar(45) AFTER server_name;
+Query OK, 0 rows affected (0.64 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+-----------------
+Add records to storage inventory:
+
+INSERT INTO storage_inventory (cluster_name,cluster_ipaddrs,node_name,node_ipaddrs,mgmt_ipaddrs,service_ipaddrs,interclus_ipaddrs,
+            storage_type,manufacturer,model,serial_number,capacity_tb,asset_tag,used_tb,environment,status,purchase_date,support_end,owners,notes) VALUES
+('Cluster01', '10.20.10.100', 'FAS8300-01', '192.168.10.10', '192.168.50.100', '172.150.10.100', '172.10.15.10', 'SAN', 'NetApp', 'FAS8300', '200004876', '200', '1500004567', '100', 'production', 'active', '2022-08-01', '2022-08-01', 'LAB-SOC', 'None');
+
+---------------------------
+
+schema backup for server_inventory DB.
+
+
+------------------------------
+
+How to Load data from csv file.
+sample file: virtual_inventory_sample.csv
+copy sample.csv file to /var/lib/mysql-files location.
+root@esrwebdb:/var/lib/mysql-files# cat virtual_inventory_sample.csv
+vm_name,host_server,hypervisor,vcpu,ram_gb,storage_gb,ip_address,os,environment,status,owner,project,notes
+vm-web-prod-01,srv-prod-001,VMware ESXi 7.0,8,32,200,10.10.1.100,Ubuntu 22.04 LTS,production,running,ops-team,web-frontend,Primary web application server
+vm-web-prod-02,srv-prod-001,VMware ESXi 7.0,8,32,200,10.10.1.101,Ubuntu 22.04 LTS,production,running,ops-team,web-frontend,Secondary web application server
+vm-db-prod-01,srv-prod-001,VMware ESXi 7.0,16,64,500,10.10.1.110,RHEL 8.6,production,running,dba-team,database,Primary MySQL production database
+vm-db-prod-02,srv-prod-002,VMware ESXi 7.0,16,64,500,10.10.1.111,RHEL 8.6,production,running,dba-team,database,Secondary MySQL production database
+vm-cache-prod-01,srv-prod-002,VMware ESXi 7.0,4,16,50,10.10.1.120,Ubuntu 22.04 LTS,production,running,ops-team,caching,Redis cache layer
+
+-----------------------------------------
+mysql> LOAD DATA INFILE '/var/lib/mysql-files/test.csv' INTO TABLE virtual_inventory FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES (vm_name, host_server, hypervisor, vcpu, ram_gb, storage_gb,ip_address, os, environment, status, owner, project, notes);
+Query OK, 2 rows affected (0.06 sec)
+Records: 2  Deleted: 0  Skipped: 0  Warnings: 0
+
+mysql> 
+--------------------------------------------
+
+
+
