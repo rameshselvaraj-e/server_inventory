@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block title %}GPU Inventory{% endblock %}
+{% block page_title %}GPU Inventory{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <title>GPU Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+{% block content %}
+ <h1>GPU Inventory Dashboard</h1>
+ <button><a href="{{ url_for('gpu_list') }}" class="btn-reset">GPU Home</a></button>
+ 
+
+<div class="dashboard-search">
+<input type="text" class="dash-search" name="model" placeholder="Filter by model" value="{{ model }}">
+<button class="dash-btn" type="submit">Search</button>
+</div>
+
+<div class="dashboard-cards">
+  <div class="dash-card">
+    <h3>{{ total_gpus }}</h3>
+    <p>Total GPUs</p> <p>500</p>
+  </div>
+  
+  <div class="dash-card">
+    <h3>{{ total_owners }}</h3>
+    <p>Owners</p> <p> Labs </p>
+  </div>
+
+  <div class="dash-card">
+    <h3>{{ total_models }}</h3>
+    <p>Models</p> <p> H100 </p>
+  </div>
+
+  <div class="dash-card">
+    <h3>{{ active_count }}</h3>
+     <p>Active</p> <p>Active </p>
+  </div>
+</div>
+
+<div class="dashboard-table">
+  <table class="data-gputable">
+        <thead>
+          <tr>
+              <th>Owner</th>
+              <th>Model</th>
+              <th>Total GPUs</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for row in gpu_data %}
+            <tr class="{% if row.model == 'TOTAL GPU' %}total-row{% endif %}">
+                <td>{{ row.owners }}</td>
+                <td>{{ row.model }}</td>
+                <td>{{ row.total_gpu }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endblock %}

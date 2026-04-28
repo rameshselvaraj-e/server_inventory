@@ -57,7 +57,7 @@ def index():
         'vm_running':       query("SELECT COUNT(*) as c FROM virtual_inventory WHERE status='running'",  fetchone=True)['c'],
         'license_expiring': query("SELECT COUNT(*) as c FROM license_inventory WHERE expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND expiry_date >= CURDATE()", fetchone=True)['c'],
         'warranty_expired': query("SELECT COUNT(*) as c FROM warranty_info WHERE status='expired'", fetchone=True)['c'],
-         'gpu_active':       query("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='active'", fetchone=True)['c'],
+        'gpu_active':       query("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='active'", fetchone=True)['c'],
         'storage_faulty':   query("SELECT COUNT(*) as c FROM storage_inventory WHERE status IN ('faulty','degraded')", fetchone=True)['c'],
         'total_storage_tb': query("SELECT COALESCE(ROUND(SUM(capacity_tb),1),0) as c FROM storage_inventory WHERE status != 'decommissioned'", fetchone=True)['c'],
     }
@@ -362,15 +362,32 @@ def gpu_list():
     sql = "SELECT * FROM gpu_inventory WHERE 1=1"
     params = []
     if search:
-        sql += " AND (gpu_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR host_server LIKE %s OR assigned_to LIKE %s)"
-        params += [f'%{search}%'] * 5
+        sql += " AND (server_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR owners LIKE %s)"
+        params += [f'%{search}%'] * 4
     if status:
         sql += " AND status=%s"
         params.append(status)
     sql += " ORDER BY created_at DESC"
     rows = query(sql, params)
     return render_template('gpu/list.html', rows=rows, search=search, status=status)
- 
+
+@app.route('/gpu/dash')
+def gpu_dash():
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT owners, COALESCE( model, 'TOTAL GPU') AS model, SUM(no_of_gpu) AS total_gpu
+        FROM gpu_inventory
+        GROUP BY owners, model WITH ROLLUP;
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+    conn.close()
+    #return data
+
+    #data = get_data()
+    return render_template('gpu/dashboard.html', gpu_data=data)
+
 @app.route('/gpu/add', methods=['GET','POST'])
 def gpu_add():
     if request.method == 'POST':

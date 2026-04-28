@@ -9,7 +9,7 @@
 {% block content %}
 <div class="filter-bar">
   <form method="get" class="filter-form">
-    <input type="text" name="search" value="{{ search }}" placeholder="Search GPU name, model, host, assigned to..." class="filter-input"/>
+    <input type="text" name="search" value="{{ search }}" placeholder="Search Server name, model, owners..." class="filter-input"/>
     <select name="status" class="filter-select">
       <option value="">All Status</option>
       <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
@@ -20,6 +20,7 @@
     </select>
     <button type="submit" class="btn-filter">Filter</button>
     <a href="{{ url_for('gpu_list') }}" class="btn-reset">Reset</a>
+    <a href="{{ url_for('gpu_dash') }}" class="btn-add">GPU Dashboard</a>
   </form>
 </div>
 
@@ -78,6 +79,7 @@
     {% else %}
       <tr><td colspan="14" class="no-data">No GPU records found.</td></tr>
     {% endfor %}
+    
     </tbody>
   </table>
 </div>
