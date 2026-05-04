@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 import mysql.connector
 from mysql.connector import Error
 from datetime import date
-import os
+import os, io
+import csv
 
 app = Flask(__name__)
 #app.secret_key = 'server_inventory_secret_key_2024'
@@ -370,6 +371,31 @@ def gpu_list():
     sql += " ORDER BY created_at DESC"
     rows = query(sql, params)
     return render_template('gpu/list.html', rows=rows, search=search, status=status)
+
+#@app.route('/gpu/export')
+#def gpu_export():
+#     conn = mysql.connector.connect(**DB_CONFIG)
+#    cursor = conn.cursor(dictionary=True)
+#    query = """
+#        SELECT owners, COALESCE( model, 'TOTAL GPU') AS model, SUM(no_of_gpu) AS total_gpu
+#        FROM gpu_inventory
+#        GROUP BY owners, model WITH ROLLUP;
+#    """
+#    cursor.execute(query)
+#    data = cursor.fetchall()
+#    conn.close()
+
+#    output = io.StringIO()
+#    writer = csv.writer(output)
+#    writer.writerow(["id", "owner", "model_name", "status"])
+
+#    for row in rows:
+#        writer.writerow([row["id"], row["owner"], row["model_name"], row["status"]])
+
+#    response = Response(output.getvalue(), mimetype="text/csv")
+#    response.headers["Content-Disposition"] = "attachment; filename=gpu_inventory.csv"
+#    return response
+#return render_template('gpu/dashboard.html', gpu_data=data)
 
 @app.route('/gpu/dash')
 def gpu_dash():
