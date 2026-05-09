@@ -13,24 +13,34 @@
  <button><a href="{{ url_for('gpu_list') }}" class="btn-reset">GPU Home</a></button>
  
 
+ <div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search servername, owners, model..." class="filter-input"/>
+
+<form method="get" action="/gpu_dashboard">
 <div class="dashboard-search">
+<input type="text" class="dash-search" name="owners" placeholder="Filter by owners" value="{{ owners }}">
 <input type="text" class="dash-search" name="model" placeholder="Filter by model" value="{{ model }}">
 <button class="dash-btn" type="submit">Search</button>
 </div>
+</form>
 
 <div class="dashboard-cards">
   <div class="dash-card">
+    <div class="display-6">{{ total_gpus }}</div>
     <h3>{{ total_gpus }}</h3>
-    <p>Total GPUs</p> <p>500</p>
+    <p>Total GPUs</p> <p>{{ total_gpus }} </p>
   </div>
   
   <div class="dash-card">
     <h3>{{ total_owners }}</h3>
-    <p>Owners</p> <p> Labs </p>
+    <div class="display-6">{{ owners }}</div>
+    <p>Owners</p> <p>{{ owners }} Labs </p>
   </div>
 
   <div class="dash-card">
     <h3>{{ total_models }}</h3>
+    <div class="display-6">{{ model }}</div>
     <p>Models</p> <p> H100 </p>
   </div>
 

@@ -372,6 +372,8 @@ def gpu_list():
     rows = query(sql, params)
     return render_template('gpu/list.html', rows=rows, search=search, status=status)
 
+
+
 #@app.route('/gpu/export')
 #def gpu_export():
 #     conn = mysql.connector.connect(**DB_CONFIG)
@@ -413,6 +415,22 @@ def gpu_dash():
 
     #data = get_data()
     return render_template('gpu/dashboard.html', gpu_data=data)
+
+@app.route('/gpu/dashboard')
+def gpu_dashboard():
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    sql = "SELECT * FROM gpu_inventory WHERE 1=1"
+    params = []
+    if search:
+        sql += " AND (server_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR owners LIKE %s)"
+        params += [f'%{search}%'] * 4
+    if status:
+        sql += " AND status=%s"
+        params.append(status)
+    sql += " ORDER BY created_at DESC"
+    rows = query(sql, params)
+    return render_template('gpu/dashboard.html', rows=rows, search=search, status=status)
 
 @app.route('/gpu/add', methods=['GET','POST'])
 def gpu_add():
