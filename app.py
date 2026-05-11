@@ -372,6 +372,65 @@ def gpu_list():
     rows = query(sql, params)
     return render_template('gpu/list.html', rows=rows, search=search, status=status)
 
+@app.route("/gpu/dashboard")
+def gpu_dashboard():
+        
+    owners = request.args.get("owners", "")
+    model  = request.args.get("model", "")
+    # Build a reusable WHERE clause based on both search fields
+    conditions = ["1=1"]
+    params = []
+ 
+    if owners:
+        conditions.append("owners LIKE %s")
+        params.append(f"%{owners}%")
+    if model:
+        conditions.append("model LIKE %s")
+        params.append(f"%{model}%")
+
+    where_clause = "WHERE " + " AND ".join(conditions)
+    
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+ 
+    # Summary cards
+    cursor.execute(f"SELECT SUM(no_of_gpu) AS total_gpus FROM gpu_inventory {where_clause}", params)
+    total_gpus = cursor.fetchone()["total_gpus"] or 0
+ 
+    cursor.execute(f"SELECT COUNT(DISTINCT owners) AS total_owners FROM gpu_inventory {where_clause}", params)
+    total_owners = cursor.fetchone()["total_owners"] or 0
+ 
+    cursor.execute(f"SELECT COUNT(DISTINCT model) AS total_models FROM gpu_inventory {where_clause}", params)
+    total_models = cursor.fetchone()["total_models"] or 0
+ 
+    cursor.execute(f"SELECT COUNT(*) AS active_count FROM gpu_inventory {where_clause} AND status = 'active'", params)
+    active_count = cursor.fetchone()["active_count"] or 0
+ 
+    # Table data: grouped by owner + model with rollup for totals
+    cursor.execute(f"""
+        SELECT
+            COALESCE(owners, 'ALL OWNERS') AS owners,
+            COALESCE(model,  'TOTAL GPU')  AS model,
+            SUM(no_of_gpu)                 AS total_gpu
+        FROM gpu_inventory
+        {where_clause}
+        GROUP BY owners, model WITH ROLLUP
+    """, params)
+    gpu_data = cursor.fetchall()
+ 
+    cursor.close()
+    conn.close()
+ 
+    return render_template(
+        "gpu/dashboard.html",
+        gpu_data=gpu_data,
+        owners=owners,
+        model=model,
+        total_gpus=total_gpus,
+        total_owners=total_owners,
+        total_models=total_models,
+        active_count=active_count,
+    )
 
 
 #@app.route('/gpu/export')
@@ -415,22 +474,6 @@ def gpu_dash():
 
     #data = get_data()
     return render_template('gpu/dashboard.html', gpu_data=data)
-
-@app.route('/gpu/dashboard')
-def gpu_dashboard():
-    search = request.args.get('search', '')
-    status = request.args.get('status', '')
-    sql = "SELECT * FROM gpu_inventory WHERE 1=1"
-    params = []
-    if search:
-        sql += " AND (server_name LIKE %s OR manufacturer LIKE %s OR model LIKE %s OR owners LIKE %s)"
-        params += [f'%{search}%'] * 4
-    if status:
-        sql += " AND status=%s"
-        params.append(status)
-    sql += " ORDER BY created_at DESC"
-    rows = query(sql, params)
-    return render_template('gpu/dashboard.html', rows=rows, search=search, status=status)
 
 @app.route('/gpu/add', methods=['GET','POST'])
 def gpu_add():

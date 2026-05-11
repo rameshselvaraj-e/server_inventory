@@ -10,46 +10,49 @@
 
 {% block content %}
  <h1>GPU Inventory Dashboard</h1>
- <button><a href="{{ url_for('gpu_list') }}" class="btn-reset">GPU Home</a></button>
+<div class="dashboard-home">
+  <button><a href="{{ url_for('gpu_list') }}" class="dashboard-home">GPU Home</a></button>
+   <a href="{{ url_for('gpu_dashboard') }}" class="btn-reset">Reset</a>
+</div>
  
-
- <div class="filter-bar">
-  <form method="get" class="filter-form">
-    <input type="text" name="search" value="{{ search }}" placeholder="Search servername, owners, model..." class="filter-input"/>
-
-<form method="get" action="/gpu_dashboard">
+<form method="get" action="{{ url_for('gpu_dashboard') }}">
 <div class="dashboard-search">
-<input type="text" class="dash-search" name="owners" placeholder="Filter by owners" value="{{ owners }}">
-<input type="text" class="dash-search" name="model" placeholder="Filter by model" value="{{ model }}">
+<input type="text" class="filter-input" name="owners" placeholder="Filter by owners" value="{{ owners }}">
+<input type="text" class="filter-input" name="model" placeholder="Filter by model" value="{{ model }}">
+ <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="faulty"         {% if status=='faulty' %}selected{% endif %}>Faulty</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
 <button class="dash-btn" type="submit">Search</button>
 </div>
 </form>
 
 <div class="dashboard-cards">
   <div class="dash-card">
-    <div class="display-6">{{ total_gpus }}</div>
     <h3>{{ total_gpus }}</h3>
-    <p>Total GPUs</p> <p>{{ total_gpus }} </p>
+    <p>Total GPUs</p>
   </div>
-  
+
   <div class="dash-card">
     <h3>{{ total_owners }}</h3>
-    <div class="display-6">{{ owners }}</div>
-    <p>Owners</p> <p>{{ owners }} Labs </p>
+    <p>Owners</p>
   </div>
 
   <div class="dash-card">
     <h3>{{ total_models }}</h3>
-    <div class="display-6">{{ model }}</div>
-    <p>Models</p> <p> H100 </p>
+    <p>Models</p>
   </div>
 
   <div class="dash-card">
     <h3>{{ active_count }}</h3>
-     <p>Active</p> <p>Active </p>
+    <p>Active</p>
   </div>
 </div>
-
+ 
 <div class="dashboard-table">
   <table class="data-gputable">
         <thead>

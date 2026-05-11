@@ -525,6 +525,13 @@ body {
   border-radius: 10px;
 }
 
+.dashboard-home {
+  margin-right: 10px;
+  overflow: auto;
+  font-size: 10px;
+  color: green;
+}
+
 .dashboard-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(180px, 1fr));
