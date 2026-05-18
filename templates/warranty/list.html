@@ -3,6 +3,7 @@
 {% block page_title %}Warranty Info{% endblock %}
 {% block topbar_action %}
   <a href="{{ url_for('warranty_add') }}" class="btn-add">+ Add Warranty</a>
+  <a href="{{ url_for('warranty_export') }}" class="btn-add"> Export CSV</a>
 {% endblock %}
 
 {% block content %}
@@ -41,8 +42,8 @@
         <td>{{ r.serial_number or '_'}}</td>
         <td>{{ r.service_support or '—' }}</td>
         <td>{{ r.owners or '—' }}</td>
-        <td>{{ r.start_date or '—' }}</td>
-        <td>{{ r.end_date or '—' }}</td>
+        <td>{{ r.support_start_date or '—' }}</td>
+        <td>{{ r.support_end_date or '—' }}</td>
         <td>{{ r.manage_by or '_'}}<td>
         <td><span class="badge badge-war-{{ r.status }}">{{ r.status.title() }}</span></td>
         <td class="actions">

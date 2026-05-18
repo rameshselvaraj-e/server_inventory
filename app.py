@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
 import mysql.connector
 from mysql.connector import Error
 from datetime import date
@@ -249,7 +249,7 @@ def warranty_list():
     if status:
         sql += " AND status=%s"
         params.append(status)
-    sql += " ORDER BY end_date ASC"
+    sql += " ORDER BY support_end_date ASC"
     rows = query(sql, params)
     return render_template('warranty/list.html', rows=rows, search=search, status=status)
 
@@ -259,10 +259,10 @@ def warranty_add():
         f = request.form
         query("""INSERT INTO warranty_info
             (asset_tag,server_name,manufacturer,model,serial_number,service_support,
-             start_date,end_date,support_level,support_contact,owners,contract_number,manage_by,notes,status)
+             support_start_date,support_end_date,support_level,support_contact,owners,contract_number,manage_by,notes,status)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (f['asset_tag'],f['server_name'],f['manufacturer'],f['model'],f['serial_number'],
-             f['service_support'],f.get('start_date') or None,f.get('end_date') or None,
+             f['service_support'],f.get('support_start_date') or None,f.get('support_end_date') or None,
              f['support_level'],f['support_contact'],f['owners'],f['contract_number'],
              f['manage_by'],f['notes'],f['status']))
         flash('Warranty record added!', 'success')
@@ -275,10 +275,10 @@ def warranty_edit(id):
         f = request.form
         query("""UPDATE warranty_info SET
             asset_tag=%s,server_name=%s,manufacturer=%s,model=%s,serial_number=%s,
-            service_support=%s,start_date=%s,end_date=%s,support_level=%s,support_contact=%s,owners=%s,
+            service_support=%s,support_start_date=%s,end_date=%s,support_level=%s,support_contact=%s,owners=%s,
             contract_number=%s,manage_by=%s,notes=%s,status=%s WHERE id=%s""",
             (f['asset_tag'],f['server_name'],f['manufacturer'],f['model'],f['serial_number'],
-             f['service_support'],f.get('start_date') or None,f.get('end_date') or None,
+             f['service_support'],f.get('support_start_date') or None,f.get('support_end_date') or None,
              f['support_level'],f['support_contact'],f['owners'],f['contract_number'],
              f['manage_by'],f['notes'],f['status'],id))
         flash('Warranty updated!', 'success')
@@ -291,6 +291,45 @@ def warranty_delete(id):
     query("DELETE FROM warranty_info WHERE id=%s", (id,))
     flash('Warranty record deleted.', 'warning')
     return redirect(url_for('warranty_list'))
+
+@app.route('/warranty/export')
+def warranty_export():
+    # Fetch all warranty data
+    rows = query("SELECT * FROM warranty_info ORDER BY support_end_date ASC") or []
+
+    headers = [
+        'ID', 'Asset Tag', 'Server Name', 'Manufacturer', 'Model',
+        'Serial Number', 'Service Support', 'Support Start Date',
+        'Support End Date', 'Support Level', 'Support Contact',
+        'Owners', 'Contract Number', 'Managed By', 'Notes', 'Status'
+    ]
+
+    keys = [
+        'id', 'asset_tag', 'server_name', 'manufacturer', 'model',
+        'serial_number', 'service_support', 'support_start_date',
+        'support_end_date', 'support_level', 'support_contact',
+        'owners', 'contract_number', 'manage_by', 'notes', 'status'
+    ]
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header row
+    writer.writerow(headers)
+
+    # Write data rows
+    for row in rows:
+        writer.writerow([row[k] if row[k] is not None else '' for k in keys])
+
+    output.seek(0)
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': 'attachment; filename=warranty_export.csv'
+        }
+    )
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # VENDOR INFO
@@ -433,30 +472,28 @@ def gpu_dashboard():
     )
 
 
-#@app.route('/gpu/export')
-#def gpu_export():
-#     conn = mysql.connector.connect(**DB_CONFIG)
-#    cursor = conn.cursor(dictionary=True)
-#    query = """
-#        SELECT owners, COALESCE( model, 'TOTAL GPU') AS model, SUM(no_of_gpu) AS total_gpu
-#        FROM gpu_inventory
-#        GROUP BY owners, model WITH ROLLUP;
-#    """
-#    cursor.execute(query)
-#    data = cursor.fetchall()
-#    conn.close()
+@app.route('/gpu/export')
+def gpu_export():
+     conn = mysql.connector.connect(**DB_CONFIG)
+     cursor = conn.cursor(dictionary=True)
+     query = """
+        SELECT * FROM gpu_inventory
+      """
+     cursor.execute(query)
+     data = cursor.fetchall()
+     conn.close()
 
-#    output = io.StringIO()
-#    writer = csv.writer(output)
-#    writer.writerow(["id", "owner", "model_name", "status"])
+     output = io.BytesIO()
+     writer = csv.writer(output)
+     writer.writerow(["id", "owner", "model_name", "status"])
 
-#    for row in rows:
-#        writer.writerow([row["id"], row["owner"], row["model_name"], row["status"]])
+     for row in rows:
+         writer.writerow([row["id"], row["owner"], row["model_name"], row["status"]])
 
-#    response = Response(output.getvalue(), mimetype="text/csv")
-#    response.headers["Content-Disposition"] = "attachment; filename=gpu_inventory.csv"
-#    return response
-#return render_template('gpu/dashboard.html', gpu_data=data)
+     response = Response(output.getvalue(), mimetype="text/csv")
+     response.headers["Content-Disposition"] = "attachment; filename=gpu_inventory.csv"
+     return response
+#  return render_template('gpu/list.html', gpu_data=data)
 
 @app.route('/gpu/dash')
 def gpu_dash():
