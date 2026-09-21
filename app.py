@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Response
 import mysql.connector
 from mysql.connector import Error
-from datetime import date, datetime
+from datetime import date
 import os, io
 import csv
 
@@ -12,8 +12,8 @@ app.secret_key = 'sim_secret_key'
 DB_CONFIG = {
     'host': 'localhost',
     'database': 'server_inventory',
-    'user': 'root',
-    'password': 'Welcome@123',
+    'user': 'itadmin',
+    'password': 'Itadmin@123',
     'port': '3306',
     'autocommit': True
 }
@@ -61,6 +61,7 @@ def index():
         'gpu_active':       query("SELECT COUNT(*) as c FROM gpu_inventory WHERE status='active'", fetchone=True)['c'],
         'storage_faulty':   query("SELECT COUNT(*) as c FROM storage_inventory WHERE status IN ('faulty','degraded')", fetchone=True)['c'],
         'total_storage_tb': query("SELECT COALESCE(ROUND(SUM(capacity_tb),1),0) as c FROM storage_inventory WHERE status != 'decommissioned'", fetchone=True)['c'],
+        'cables_qty':       query("SELECT COALESCE(SUM(quantity),0) as c FROM cable_inventory WHERE status!='in_stock'", fetchone=True)['c'],
     }
     return render_template('index.html', stats=stats)
 
@@ -249,7 +250,7 @@ def warranty_list():
     if status:
         sql += " AND status=%s"
         params.append(status)
-    sql += " ORDER BY support_end_date ASC"
+    sql += " ORDER BY end_date ASC"
     rows = query(sql, params)
     return render_template('warranty/list.html', rows=rows, search=search, status=status)
 
@@ -616,6 +617,81 @@ def storage_delete(id):
     query("DELETE FROM storage_inventory WHERE id=%s", (id,))
     flash('Storage device deleted.', 'warning')
     return redirect(url_for('storage_list'))
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CABLE INVENTORY
+# ═══════════════════════════════════════════════════════════════════════════════
+@app.route('/cables')
+def cable_list():
+    search     = request.args.get('search','').strip()
+    status     = request.args.get('status','')
+    cable_type = request.args.get('cable_type','')
+    sql        = "SELECT * FROM cable_inventory WHERE 1=1"
+    params     = []
+    if search:
+        sql += (" AND (cable_name LIKE %s OR cable_type LIKE %s OR manufacturer LIKE %s" 
+        " OR datacenter LIKE %s)")
+        params += ['%'+search+'%']*4
+    if status:
+        sql += " AND status=%s"; params.append(status)
+    if cable_type:
+        sql += " AND cable_type=%s"; params.append(cable_type)
+    sql += " ORDER BY cable_type, cable_name"
+    rows = query(sql, params)
+ 
+    def _q(s,p=None): return query(s,p,fetchone=True) or {}
+    stats = {
+        'total':     (_q("SELECT COUNT(*) c FROM cable_inventory") or {}).get('c', 0),
+        'in_stock':  (_q("SELECT COUNT(*) c FROM cable_inventory WHERE status='in_stock'") or {}).get('c', 0),
+        'in_use':    (_q("SELECT COUNT(*) c FROM cable_inventory WHERE status='in_use'") or {}).get('c', 0),
+        'total_qty': (_q("SELECT COALESCE(SUM(quantity),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
+        'total_value': (_q("SELECT COALESCE(SUM(unit_cost*quantity),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
+        'by_type':   query("SELECT cable_type, COUNT(*) cnt, COALESCE(SUM(quantity),0) qty FROM cable_inventory GROUP BY cable_type ORDER BY cnt DESC LIMIT 8") or [],
+    }
+    return render_template('cables/list.html', rows=rows, search=search,
+                           status=status, cable_type=cable_type, stats=stats)
+ 
+@app.route('/cables/add', methods=['GET','POST'])
+def cable_add():
+    if request.method == 'POST':
+        f = request.form
+        query("""INSERT INTO cable_inventory
+            (cable_name,cable_type,length_m,data_gbps,manufacturer,
+            part_number,serial_number,quantity,used,available,
+            location,datacenter,rack_location,vendor,purchase_date,
+            condition_state,status,notes)
+            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (f['cable_name'],f['cable_type'],f.get('length_m') or None,f.get('data_gbps') or None,f['manufacturer'],
+            f['part_number'],f['serial_number'],f.get('quantity') or 1,f.get('used') or None,f.get('available') or None,
+            f['location'],f['datacenter'],f['rack_location'],f['vendor'],f.get('purchase_date') or None,
+            f['condition_state'],f['status'],f['notes']))
+        flash('Cable added successfully!','success')
+        return redirect(url_for('cable_list'))
+    return render_template('cables/form.html', row=None, action='Add')
+ 
+@app.route('/cables/edit/<int:id>', methods=['GET','POST'])
+def cable_edit(id):
+    if request.method == 'POST':
+        f = request.form
+        query("""UPDATE cable_inventory SET
+            cable_name=%s,cable_type=%s,length_m=%s,data_gbps=%s,manufacturer=%s,
+            part_number=%s,serial_number=%s,quantity=%s,used=%s,available=%s,
+            location=%s,datacenter=%s,rack_location=%s,vendor=%s,purchase_date=%s,
+            condition_state=%s,status=%s,notes=%s WHERE id=%s""",
+            (f['cable_name'],f['cable_type'],f.get('length_m') or None,f.get('data_gbps') or None,f['manufacturer'],
+            f['part_number'],f['serial_number'],f.get('quantity') or 1,f.get('used') or None,f.get('available') or None,
+            f['location'],f['datacenter'],f['rack_location'],f['vendor'],f.get('purchase_date') or None,f['condition_state'],f['status'],f['notes'],id))
+        flash('Cable updated!','success')
+        return redirect(url_for('cable_list'))
+    row = query("SELECT * FROM cable_inventory WHERE id=%s",(id,),fetchone=True)
+    return render_template('cables/form.html', row=row, action='Edit')
+ 
+@app.route('/cables/delete/<int:id>', methods=['POST'])
+def cable_delete(id):
+    query("DELETE FROM cable_inventory WHERE id=%s",(id,))
+    flash('Cable deleted.','warning')
+    return redirect(url_for('cable_list'))
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

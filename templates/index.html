@@ -74,6 +74,15 @@
     </div>
   </a>
 
+  <a href="{{ url_for('cable_list') }}" class="stat-card card-cables">
+    <div class="stat-icon">⌁</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.cables }}</div>
+      <div class="stat-label">Cables</div>
+      <div class="stat-sub">{{ stats.cables_qty }} total units</div>
+    </div>
+  </a>
+  
 </div>
 
 <div class="quick-links">

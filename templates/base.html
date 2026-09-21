@@ -45,6 +45,9 @@
       <a href="{{ url_for('vendor_list') }}" class="nav-item {% if 'vendor' in request.endpoint %}active{% endif %}">
         <span class="material-symbols-outlined">business_chip</span> Vendor
       </a>
+        <a href="{{ url_for('cable_list') }}" class="nav-item {% if 'cable' in request.endpoint %}active{% endif %}">
+        <span class="nav-icon">⌁</span> Cables
+      </a>
     </nav>
     <div class="sidebar-footer">SRA Inventory v1.0</div>
   </aside>

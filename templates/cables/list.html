@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Cable Inventory{% endblock %}
+{% block page_title %}Cable Inventory{% endblock %}
+ 
+{% block topbar_action %}
+  <a href="{{ url_for('cable_add') }}" class="btn-add">+ Add Cable</a>
+{% endblock %}
+ 
+{% block content %}
+ 
+{# ── Stats Strip ──────────────────────────────────────────────────────────── #}
+<div class="pc-stats-strip">
+  <div class="pc-stat">
+    <span class="pc-stat-val">{{ stats.total }}</span>
+    <span class="pc-stat-lbl">Cable Types</span>
+  </div>
+  <div class="pc-stat-div"></div>
+  <div class="pc-stat">
+    <span class="pc-stat-val pc-blue">{{ stats.total_qty }}</span>
+    <span class="pc-stat-lbl">Total Cables</span>
+  </div>
+  <div class="pc-stat-div"></div>
+  <div class="pc-stat">
+    <span class="pc-stat-val pc-green">{{ stats.in_stock }}</span>
+    <span class="pc-stat-lbl">In Stock</span>
+  </div>
+  <div class="pc-stat-div"></div>
+  <div class="pc-stat">
+    <span class="pc-stat-val pc-teal">{{ stats.in_use }}</span>
+    <span class="pc-stat-lbl">In Use</span>
+  </div>
+ 
+  {% if stats.by_type %}
+  <div class="pc-stat-div"></div>
+  <div class="pc-cat-bars">
+    <span class="pc-cat-title">By Type</span>
+    <div class="pc-cat-list">
+      {% set max_cnt = stats.by_type[0].cnt if stats.by_type else 1 %}
+      {% for t in stats.by_type %}
+      <div class="pc-cat-row">
+        <span class="pc-cat-name">{{ t.cable_type }}</span>
+        <div class="pc-cat-track">
+          <div class="pc-cat-fill pc-cat-fill-cable" style="width:{{ (t.cnt / max_cnt * 100)|int }}%"></div>
+        </div>
+        <span class="pc-cat-cnt">{{ t.qty }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+ 
+{# ── Filters ──────────────────────────────────────────────────────────────── #}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}"
+           placeholder="Search cable name, type, device, datacenter…" class="filter-input"/>
+    <select name="cable_type" class="filter-select">
+      <option value="">All Types</option>
+      {% for t in ['Cat','DAC','Fiber','RJ45','SFP+','QSFP+','QSFP28','Other'] %}
+        <option value="{{ t }}" {% if cable_type==t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      {% for s in ['in_stock','in_use','reserved','disposed'] %}
+        <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('cable_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+ 
+{# ── Table ────────────────────────────────────────────────────────────────── #}
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+       <tr>
+        <th>#</th>
+        <th>Cable Name</th>
+        <th>Type</th>
+        <th>Length</th>
+        <th>Speed</th>
+        <th>Manufacturer</th>
+        <th>part_number</th>
+        <th>Qty</th>
+        <th>Used</th>
+        <th>Available</th>
+        <th>Location</th>
+        <th>DC / Rack</th>
+        <th>Vendor</th>
+        <th>Condition</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+          {{ r.cable_name }}
+          </div>
+        </td>
+        <td><span class="badge badge-cable-type">{{ r.cable_type or '—' }}</span></td>
+        <td class="mono">{{ r.length_m if r.length_m else '—' }}{% if r.length_m %} m{% endif %}</td>
+        <td class="mono">{{ r.data_gbps if r.data_gbps else '—' }}{% if r.data_gbps %} G{% endif %}</td>
+        <td>{{ r.manufacturer or '—' }}</td>
+        <td>{{ r.part_number or '—' }}</td>
+        <td class="qty-cell">{{ r.quantity }}</td>
+        <td class="qty-cell">{{ r.used }}</td>
+        <td class="qty-cell">{{ r.available }}</td>
+        <td><span class="location-text">{{ r.location or '—' }}</span></td>
+        <td>
+          {% if r.datacenter %}{{ r.datacenter }}{% endif %}
+          {% if r.rack_location %}<span class="bin-badge">{{ r.rack_location }}</span>{% endif %}
+        </td>
+        <td>{{ r.vendor or '—' }}</td>
+        <td><span class="badge badge-cond-{{ r.condition_state }}">{{ r.condition_state }}</span></td>
+        <td><span class="badge badge-cable-{{ r.status }}">{{ r.status.replace('_',' ') }}</span></td>
+        <td class="actions">
+          <a href="{{ url_for('cable_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('cable_delete', id=r.id) }}"
+                style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="15" class="no-data">No cables found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

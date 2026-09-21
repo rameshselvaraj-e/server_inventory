@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Cable{% endblock %}
+{% block page_title %}{{ action }} Cable{% endblock %}
+ 
+{% block content %}
+<div class="form-card">
+  <form method="post">
+ 
+    <div class="form-section-title">Cable Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Cable Name *</label>
+        <input type="text" name="cable_name" value="{{ row.cable_name if row else '' }}"
+               required class="form-input" placeholder="Cat6A Patch Cable 1m Blue"/>
+      </div>
+
+      <div class="form-group">
+        <label>Cable Type</label>
+        <select name="cable_type" class="form-select">
+        {% for t in ['Cat','DAC','Fiber','RJ45','SFP+','QSFP+','QSFP28','Other'] %}
+        <option value="{{ t }}" {% if row and row.cable_type==t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+        </select>
+        </div>
+
+      <div class="form-group">
+        <label>Length (metres)</label>
+        <input type="number" name="length_m" step="0.01"
+               value="{{ row.length_m if row else '' }}" class="form-input" placeholder="1.0"/>
+      </div>
+
+      <div class="form-group">
+        <label>Speed (Gbps)</label>
+        <input type="number" name="data_gbps" step="0.01"
+               value="{{ row.data_gbps if row else '' }}" class="form-input" placeholder="10"/>
+      </div>
+
+      <div class="form-group">
+        <label>Manufacturer</label>
+        <input type="text" name="manufacturer" value="{{ row.manufacturer if row else '' }}"
+               class="form-input" placeholder="Panduit, Cisco, Mellanox…"/>
+      </div>
+
+      <div class="form-group">
+        <label>Part Number</label>
+        <input type="text" name="part_number" value="{{ row.part_number if row else '' }}"
+               class="form-input" placeholder="UTPSP1BUY"/>
+      </div>
+
+      <div class="form-group">
+        <label>Serial Number</label>
+        <input type="text" name="serial_number" value="{{ row.serial_number if row else '' }}"
+               class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Vendor / Supplier</label>
+        <input type="text" name="vendor" value="{{ row.vendor if row else '' }}"
+               class="form-input" placeholder="Panduit"/>
+      </div>
+     
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" value="{{ row.quantity if row else 1 }}"
+               min="0" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Used</label>
+        <input type="number" name="used" value="{{ row.used if row else 1 }}"
+               min="0" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Available</label>
+        <input type="number" name="available" value="{{ row.available if row else 1 }}"
+               min="0" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Condition</label>
+        <select name="condition_state" class="form-select">
+          {% for c in ['new','used','damaged','disposed'] %}
+            <option value="{{ c }}" {% if row and row.condition_state==c %}selected
+            {% elif not row and c=='new' %}selected{% endif %}>{{ c.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['in_stock','in_use','reserved','disposed'] %}
+            <option value="{{ s }}" {% if row and row.status==s %}selected
+            {% elif not row and s=='in_stock' %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Purchase Date</label>
+        <input type="date" name="purchase_date"
+               value="{{ row.purchase_date if row else '' }}" class="form-input"/>
+      </div>
+
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" name="location" value="{{ row.location if row else '' }}"
+               class="form-input" placeholder="DC-East Cable Tray"/>
+      </div>
+    
+      <div class="form-group">
+        <label>Datacenter</label>
+        <input type="text" name="datacenter" value="{{ row.datacenter if row else '' }}"
+               class="form-input" placeholder="DC-East"/>
+      </div>
+
+      <div class="form-group">
+        <label>Rack Location</label>
+        <input type="text" name="rack_location" value="{{ row.rack_location if row else '' }}"
+               class="form-input" placeholder="R12"/>
+      </div>
+    
+      <div class="form-group form-full">
+        <label>Notes</label>
+        <textarea name="notes" class="form-textarea" rows="2">{{ row.notes if row else '' }}</textarea>
+      </div>
+    </div>
+ 
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} Cable</button>
+      <a href="{{ url_for('cable_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
