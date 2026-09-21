@@ -645,6 +645,8 @@ def cable_list():
         'in_stock':  (_q("SELECT COUNT(*) c FROM cable_inventory WHERE status='in_stock'") or {}).get('c', 0),
         'in_use':    (_q("SELECT COUNT(*) c FROM cable_inventory WHERE status='in_use'") or {}).get('c', 0),
         'total_qty': (_q("SELECT COALESCE(SUM(quantity),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
+        'total_used': (_q("SELECT COALESCE(SUM(used),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
+        'total_available': (_q("SELECT COALESCE(SUM(available),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
         'total_value': (_q("SELECT COALESCE(SUM(unit_cost*quantity),0) c FROM cable_inventory WHERE status!='disposed'") or {}).get('c', 0),
         'by_type':   query("SELECT cable_type, COUNT(*) cnt, COALESCE(SUM(quantity),0) qty FROM cable_inventory GROUP BY cable_type ORDER BY cnt DESC LIMIT 8") or [],
     }

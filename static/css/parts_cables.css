@@ -1,0 +1,254 @@
+/* =============================================================================
+   parts_cables.css  —  Parts & Cable Inventory
+   Link in base.html:
+     <link rel="stylesheet" href="{{ url_for('static', filename='css/parts_cables.css') }}"/>
+============================================================================= */
+ 
+/* ── Stats Strip ──────────────────────────────────────────────────────────── */
+.pc-stats-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 22px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+ 
+.pc-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 18px;
+}
+.pc-stat-val {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+.pc-stat-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--muted);
+  margin-top: 5px;
+  white-space: nowrap;
+}
+.pc-stat-div {
+  width: 1px;
+  height: 44px;
+  background: var(--border);
+  align-self: center;
+}
+ 
+.pc-alert-stat {
+  background: rgba(248,81,73,0.06);
+  border-radius: 8px;
+  padding: 4px 14px;
+}
+ 
+/* colour helpers */
+.pc-green  { color: var(--green)  !important; }
+.pc-blue   { color: var(--accent) !important; }
+.pc-red    { color: var(--red)    !important; }
+.pc-teal   { color: #20c997      !important; }
+.pc-orange { color: var(--orange) !important; }
+ 
+/* ── Category Mini-bars ───────────────────────────────────────────────────── */
+.pc-cat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 18px;
+  min-width: 200px;
+}
+.pc-cat-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.pc-cat-list  { display: flex; flex-direction: column; gap: 5px; }
+.pc-cat-row   { display: flex; align-items: center; gap: 8px; }
+.pc-cat-name  {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+.pc-cat-track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pc-cat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #20c997);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.pc-cat-fill-cable {
+  background: linear-gradient(90deg, var(--purple), #20c997);
+}
+.pc-cat-cnt {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 22px;
+  text-align: right;
+}
+ 
+/* ── Table Additions ──────────────────────────────────────────────────────── */
+ 
+/* Part name with low-stock badge */
+.part-name-cell { display: flex; align-items: center; gap: 7px; font-weight: 600; }
+ 
+.low-stock-badge {
+  background: rgba(248,81,73,0.15);
+  color: var(--red);
+  border: 1px solid rgba(248,81,73,0.4);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  animation: blink-border 1.8s infinite;
+}
+@keyframes blink-border {
+  0%,100% { border-color: rgba(248,81,73,0.4); }
+  50%      { border-color: rgba(248,81,73,0.9); }
+}
+ 
+/* Low-stock row highlight */
+.row-low-stock { background: rgba(248,81,73,0.04) !important; }
+.row-low-stock:hover { background: rgba(248,81,73,0.07) !important; }
+ 
+/* Qty cell */
+.qty-cell { font-weight: 800; font-family: 'JetBrains Mono', monospace; text-align: center; }
+.qty-low  { color: var(--red); }
+ 
+/* Location + Bin */
+.location-text { font-size: 12px; color: var(--muted); }
+.bin-badge {
+  display: inline-block;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  color: var(--accent);
+  margin-left: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+ 
+.muted-text { color: var(--muted); font-size: 12px; }
+ 
+/* Cable dot (colour swatch) */
+.cable-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: inline-block;
+}
+ 
+/* Connection flow */
+.conn-flow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+.conn-device { font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.conn-port   { color: var(--muted); font-size: 10px; font-style: italic; }
+.conn-arrow  { color: var(--accent); font-size: 12px; }
+ 
+/* ── Badges ───────────────────────────────────────────────────────────────── */
+ 
+/* Part category */
+.badge-part-cat {
+  background: rgba(88,166,255,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(88,166,255,0.25);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+ 
+/* Cable type */
+.badge-cable-type {
+  background: rgba(188,140,255,0.1);
+  color: var(--purple);
+  border: 1px solid rgba(188,140,255,0.25);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+ 
+/* Condition badges */
+.badge-cond-new          { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-cond-used         { background: rgba(88,166,255,0.1);  color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+.badge-cond-refurbished  { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+.badge-cond-faulty       { background: rgba(248,81,73,0.12);  color: var(--red);    border: 1px solid rgba(248,81,73,0.3); }
+.badge-cond-scrap        { background: rgba(139,148,158,0.1); color: var(--muted);  border: 1px solid var(--border); }
+.badge-cond-damaged      { background: rgba(248,81,73,0.12);  color: var(--red);    border: 1px solid rgba(248,81,73,0.3); }
+.badge-cond-disposed     { background: rgba(139,148,158,0.08);color: var(--muted);  border: 1px solid var(--border); }
+ 
+/* Parts status badges */
+.badge-part-in_stock  { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-part-in\ stock { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-part-in_use    { background: rgba(88,166,255,0.1);  color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+.badge-part-in\ use   { background: rgba(88,166,255,0.1);  color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+.badge-part-reserved  { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+.badge-part-ordered   { background: rgba(32,201,151,0.1);  color: #20c997;       border: 1px solid rgba(32,201,151,0.3); }
+.badge-part-returned  { background: rgba(188,140,255,0.1); color: var(--purple); border: 1px solid rgba(188,140,255,0.25); }
+.badge-part-disposed  { background: rgba(139,148,158,0.08);color: var(--muted);  border: 1px solid var(--border); }
+ 
+/* Cable status badges */
+.badge-cable-in_stock  { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-cable-in\ stock { background: rgba(63,185,80,0.12);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+.badge-cable-in_use    { background: rgba(88,166,255,0.1);  color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+.badge-cable-in\ use   { background: rgba(88,166,255,0.1);  color: var(--accent); border: 1px solid rgba(88,166,255,0.25); }
+.badge-cable-reserved  { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+.badge-cable-disposed  { background: rgba(139,148,158,0.08);color: var(--muted);  border: 1px solid var(--border); }
+ 
+/* ── Badge size normalisation (inherit from base) ─────────────────────────── */
+.badge-part-cat, .badge-cable-type,
+[class^="badge-cond-"],
+[class^="badge-part-"],
+[class^="badge-cable-"] {
+  display: inline-block;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+ 
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .pc-stats-strip { flex-direction: column; gap: 12px; }
+  .pc-stat-div    { display: none; }
+  .pc-cat-bars    { padding: 0; }
+}
