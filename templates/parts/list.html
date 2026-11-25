@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Parts & Cables Inventory{% endblock %}
+{% block page_title %}Parts & Cables{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('parts_add') }}" class="btn-add">+ Add Parts & Cables</a>
+  <!---  <a href="{{ url_for('disposal_export') }}" class="btn-add"> Export CSV</a>  -->
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search hostname, IP, asset tag..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('parts_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Project Name</th><th>Owners</th><th>Location</th><th>Lab Name</th><th>Purchase Order</th>
+        <th>Product Make</th><th>Part Number</th><th>Cable Type</th><th>Data Speed</th><th>Cable Length</th>
+        <th>Quantity</th><th>Used</td><th>Available</th><th>Description</th><th>Shipment Info</th><th>Tracking Number</td><th>Received Date</th><th>Remarks</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.project_name }}</td>
+        <td class="mono">{{ r.owners or '—' }}</td>
+        <td>{{ r.location or '_' }}</td>
+        <td>{{ r.lab_name or '—' }}</td>
+        <td>{{ r.purchase_order or '_' }}</td>
+        <td>{{ r.product_make or '_' }}</td>
+        <td>{{ r.part_number or '—' }}</td>
+        <td><span class="badge badge-env-{{ r.cable_type }}">{{ r.cable_type }}</span></td>
+        <td><span class="badge badge-gpu-{{ r.data_speed }}">{{ r.data_speed }}</span></td>
+        <td>{{ r.cable_length or '—' }}</td>
+        <td>{{ r.quantity or '—' }}</td>
+        <td>{{ r.used or '—' }}</td>
+        <td>{{ r.available or '—' }}</td>
+        <td>{{ r.description or '—' }}</td>
+        <td>{{ r.shipment_info or '—' }}</td>
+        <td>{{ r.tracking_number or '—' }}</td>
+        <td>{{ r.received_date or '—' }}</td>
+        <td>{{ r.remarks or '—' }}</td>
+        <td class="actions">
+          <a href="{{ url_for('parts_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('parts_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="11" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
