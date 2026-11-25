@@ -5,57 +5,38 @@
 {% block content %}
 <div class="dashboard-grid">
 
+  <a href="{{ url_for('site_list') }}" class="stat-card card-blue">
+  <div class="stat-icon"><span class="material-symbols-outlined">location_on</span></div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.site }}</div>
+      <div class="stat-label">Sites Information</div>
+      <div class="stat-sub">{{ stats.site }} Sites</div>
+    </div>
+  </a>
+
+
   <a href="{{ url_for('physical_list') }}" class="stat-card card-blue">
-    <div class="stat-icon"></div>
+    <div class="stat-icon"><span class="material-symbols-outlined">host</span></div>
     <div class="stat-info">
       <div class="stat-num">{{ stats.physical }}</div>
       <div class="stat-label">Physical Servers</div>
       <div class="stat-sub">{{ stats.physical_active }} active</div>
+      <div class="stat-sub">{{ stats.physical_decom }} Decommissioned</div>
     </div>
   </a>
 
   <a href="{{ url_for('virtual_list') }}" class="stat-card card-green">
-    <div class="stat-icon"></div>
+    <div class="stat-icon"><span class="material-symbols-outlined">apps</span></div>
     <div class="stat-info">
       <div class="stat-num">{{ stats.virtual }}</div>
       <div class="stat-label">Virtual Machines</div>
       <div class="stat-sub">{{ stats.vm_running }} running</div>
-    </div>
-  </a>
-
-  <a href="{{ url_for('license_list') }}" class="stat-card card-yellow">
-    <div class="stat-icon"></div>
-    <div class="stat-info">
-      <div class="stat-num">{{ stats.license }}</div>
-      <div class="stat-label">Licenses</div>
-      <div class="stat-sub {{ 'alert-text' if stats.license_expiring > 0 else '' }}">
-        {{ stats.license_expiring }} expiring soon
-      </div>
-    </div>
-  </a>
-
-  <a href="{{ url_for('warranty_list') }}" class="stat-card card-red">
-    <div class="stat-icon"></div>
-    <div class="stat-info">
-      <div class="stat-num">{{ stats.warranty }}</div>
-      <div class="stat-label">Warranty Records</div>
-      <div class="stat-sub {{ 'alert-text' if stats.warranty_expired > 0 else '' }}">
-        {{ stats.warranty_expired }} expired
-      </div>
-    </div>
-  </a>
-
-  <a href="{{ url_for('vendor_list') }}" class="stat-card card-purple">
-    <div class="stat-icon"></div>
-    <div class="stat-info">
-      <div class="stat-num">{{ stats.vendor }}</div>
-      <div class="stat-label">Vendors</div>
-      <div class="stat-sub">managed partners</div>
+      <div class="stat-sub">{{ stats.vm_stopped }} stopped</div>
     </div>
   </a>
 
   <a href="{{ url_for('gpu_list') }}" class="stat-card card-teal">
-    <div class="stat-icon">◧</div>
+    <div class="stat-icon"><span class="material-symbols-outlined">memory</span></div>
     <div class="stat-info">
       <div class="stat-num">{{ stats.gpu }}</div>
       <div class="stat-label">GPU Devices</div>
@@ -64,7 +45,7 @@
   </a>
 
   <a href="{{ url_for('storage_list') }}" class="stat-card card-cyan">
-    <div class="stat-icon">▤</div>
+    <div class="stat-icon"><span class="material-symbols-outlined">storage</span></div>
     <div class="stat-info">
       <div class="stat-num">{{ stats.storage }}</div>
       <div class="stat-label">Storage Devices</div>
@@ -74,15 +55,60 @@
     </div>
   </a>
 
-  <a href="{{ url_for('cable_list') }}" class="stat-card card-cables">
-    <div class="stat-icon">⌁</div>
+  <a href="{{ url_for('license_list') }}" class="stat-card card-yellow">
+    <div class="stat-icon"><span class="material-symbols-outlined">license</span></div>
     <div class="stat-info">
-      <div class="stat-num">{{ stats.cables }}</div>
-      <div class="stat-label">Cables</div>
-      <div class="stat-sub">{{ stats.cables_qty }} total units</div>
+      <div class="stat-num">{{ stats.license }}</div>
+      <div class="stat-label">Licenses</div>
+      <div class="stat-sub">{{ stats.license_active }} active</div>
+      <div class="stat-sub">{{ stats.license_expired }} expired</div>
+      <div class="stat-sub {{ 'alert-text' if stats.license_expiring > 0 else '' }}">
+        {{ stats.license_expiring }} expiring soon
+      </div>
     </div>
   </a>
-  
+
+  <a href="{{ url_for('warranty_list') }}" class="stat-card card-teal">
+    <div class="stat-icon"><span class="material-symbols-outlined">support</span></div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.warranty }}</div>
+      <div class="stat-label">Warranty / Support</div>
+      <div class="stat-sub">{{ stats.warranty_active }} active</div>
+      <div class="stat-sub">{{ stats.warranty_extended }} extended</div>
+      <div class="stat-sub {{ 'alert-text' if stats.warranty_expired > 0 else '' }}">
+        {{ stats.warranty_expired }} expired
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('vendor_list') }}" class="stat-card card-purple">
+    <div class="stat-icon"><span class="material-symbols-outlined">business_center</span></div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.vendor }}</div>
+      <div class="stat-label">Vendors</div>
+      <div class="stat-sub">managed partners</div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('disposal_list') }}" class="stat-card card-red">
+    <div class="stat-icon"><span class="material-symbols-outlined">recycling</span></div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.disposal }}</div>
+      <div class="stat-label">Disposal Devices</div>
+      <div class="stat-sub">{{ stats.disposal_list }} Decommissioned</div>
+    </div>
+  </a>
+
+   <a href="{{ url_for('cable_list') }}" class="stat-card card-teal">
+    <div class="stat-icon"><span class="material-symbols-outlined">cable</span></div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats.cables }}</div>
+      <div class="stat-label">Cables Count</div>
+      <div class="stat-sub">{{ stats.cables_qty }} Total Count</div>
+      <div class="stat-sub">{{ stats.cables_used }} Used</div>
+      <div class="stat-sub">{{ stats.cables_available }} Available</div>
+    </div>
+  </a>
 </div>
 
 <div class="quick-links">
@@ -95,6 +121,9 @@
     <a href="{{ url_for('vendor_add') }}" class="quick-btn">+ Add Vendor</a>
     <a href="{{ url_for('gpu_add') }}" class="quick-btn">+ Add GPU</a>
     <a href="{{ url_for('storage_add') }}" class="quick-btn">+ Add Storage Device</a>
+    <a href="{{ url_for('disposal_add') }}" class="quick-btn">+ Add Disposal Device</a>
+    <a href="{{ url_for('site_add') }}" class="quick-btn">+ Add Sites</a>
+    <a href="{{ url_for('cable_add') }}" class="quick-btn">+ Add Cables</a>
   </div>
 </div>
 {% endblock %}
