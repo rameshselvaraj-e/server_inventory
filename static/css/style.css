@@ -14,6 +14,7 @@
   --red:      #f85149;
   --purple:   #bc8cff;
   --orange:   #ffa657;
+  --lgreen:   #b8f20c;
   --sidebar-w: 220px;
   --radius:   6px;
 }
@@ -304,8 +305,8 @@ body {
 .badge-vm-deleted    { background: rgba(139,148,158,0.15);color: var(--muted); }
 
 /* VM environment */
-.badge-env-production  { background: rgba(248,81,73,0.12);  color: var(--red);    }
-.badge-env-staging     { background: rgba(210,153,34,0.12); color: var(--yellow); }
+.badge-env-production  { background: rgba(248,81,73,0.12);  color: var(--green);    }
+.badge-env-quality     { background: rgba(210,153,34,0.12); color: var(--yellow); }
 .badge-env-development { background: rgba(88,166,255,0.12); color: var(--accent); }
 .badge-env-testing     { background: rgba(188,140,255,0.12);color: var(--purple); }
 
@@ -318,7 +319,7 @@ body {
 /* Warranty status */
 .badge-war-active   { background: rgba(63,185,80,0.15);  color: var(--green); }
 .badge-war-expired  { background: rgba(248,81,73,0.15);  color: var(--red);   }
-.badge-war-extended { background: rgba(88,166,255,0.12); color: var(--accent); }
+.badge-war-extended { background: rgba(88,166,255,0.12); color: var(--lgreen); }
 .badge-war-voided   { background: rgba(139,148,158,0.15);color: var(--muted); }
 
 /* Vendor status */
@@ -356,10 +357,10 @@ body {
 }
 .stat-card:hover { transform: translateY(-2px); }
 
-.stat-icon { font-size: 28px; }
-.stat-num  { font-size: 32px; font-weight: 800; line-height: 1; }
-.stat-label{ font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); margin-top: 4px; text-transform: uppercase; }
-.stat-sub  { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.stat-icon { font-size: 50px; }
+.stat-num  { font-size: 30px; font-weight: 800; line-height: 1; }
+.stat-label{ font-size: 15px; font-weight: 700; letter-spacing: 0.5px; color: var(--muted); margin-top: 4px; text-transform: uppercase; }
+.stat-sub  { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
 .card-blue   { border-color: rgba(88,166,255,0.4);  }
 .card-blue .stat-icon { color: var(--accent); }
@@ -517,93 +518,15 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-/*================GPU Dashbord=========*/
-.dashboard-search {
-  margin-bottom: 20px;
-  overflow: auto;
-  background: var(--bg2);
-  border-radius: 10px;
-}
-
-.dashboard-home {
-  margin-right: 10px;
-  overflow: auto;
-  font-size: 10px;
-  color: green;
-}
-
-.dashboard-cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+/*______________GPU Dashboard style.css_______________*/
+.gpu-grid {
+  /*display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
-  margin-bottom: 20px;
-  overflow: auto;
-  background: var(--bg2);
-  border-radius: 10px;
+  margin-bottom: 32px;*/
 }
 
-.dash-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  border-left: 5px solid #2563eb;
-}
-
-.dash-card h3 {
-  margin: 0;
-  font-size: 30px;
-  color: #111827;
-}
-
-.dash-card p {
-  margin: 6px 0 0;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-/*_______________GPU Dashboard Table_________________*/
-.dashboard-table {
-  /*background: var(--bg2);*/
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  overflow: auto;
-
-}
-
-.data-gputable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  border: 2px solid var(--border);
-  overflow: auto;
-}
-
-.data-gputable th {
-  background: var(--bg3);
-  color: green;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.data-gputable td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  vertical-align: middle;
-  text-align: left;
-}
-
-.data-gputable .total-row {
-  font-weight: bold;
-  background-color: #058ed3;
-}
-
-
-/*______________________GPU Dashboard____________________*/
+/*.total-row { font-weight: bold; background-color: #e0f7fa; }
+.dashboard-gpudash-grid.th { background-color: #1e0bc5; }*/
+.total-row { font-weight: bold; background-color: #175188; }
+.gpudash-grid.th, td { border: 0px solid #dddddd; padding: 12px; text-align: left; }
