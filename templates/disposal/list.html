@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Disposal Inventory{% endblock %}
+{% block page_title %}Disposal Devices{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('disposal_add') }}" class="btn-add">+ Add Devices</a>
+  <!---  <a href="{{ url_for('disposal_export') }}" class="btn-add"> Export CSV</a>  -->
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search hostname, IP, asset tag..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+      <option value="active"         {% if status=='active' %}selected{% endif %}>Active</option>
+      <option value="inactive"       {% if status=='inactive' %}selected{% endif %}>Inactive</option>
+      <option value="maintenance"    {% if status=='maintenance' %}selected{% endif %}>Maintenance</option>
+      <option value="decommissioned" {% if status=='decommissioned' %}selected{% endif %}>Decommissioned</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('disposal_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Hostname</th><th>Asset Tag</th><th>Type</th>
+        <th>Manufacturer / Model</th><th> Serial Number</th><th>CPU / RAM</th><th>MGMT IP Address</th><th>Server IP Address</td>
+        <th>Datacenter</th><th>OS</th><th>Status</th><th>Owners</th><th>Support End Date</td><th>Decommissioned Date</th><th>Disposal Date</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td class="mono">{{ r.hostname }}</td>
+        <td class="mono">{{ r.asset_tag or '—' }}</td>
+        <td>{{ r.server_type or '—' }}</td>
+        <td>{{ r.manufacturer }} / {{ r.model }}</td>
+        <td>{{ r.serial_number or '_' }}</td>
+        <td>{{ r.cpu_cores or '?' }}C / {{ r.ram_gb or '?' }}GB</td>
+        <td class="mono">{{ r.mgmt_ipaddrs or '—' }}</td>
+        <td class="mono">{{ r.server_ipaddrs or '—' }}</td>
+        <td>{{ r.datacenter or '—' }}</td>
+        <td>{{ r.os or '—' }}</td>
+        <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+        <td>{{ r.owners or '_' }}</td>
+        <td>{{ r.support_end_date }}</td>
+        <td>{{ r.decom_date }}</td>
+        <td>{{ r.disposal_date }}</td>
+        <td class="actions">
+          <a href="{{ url_for('disposal_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('disposal_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="11" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
