@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Site Info{% endblock %}
+{% block page_title %}{{ action }} Site Info{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <form method="post">
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Entity Name *</label>
+        <input type="text" name="entity" value="{{ row.entity if row else '' }}" required class="form-input" placeholder="SRA, NASB,..."/>
+      </div>
+
+      <div class="form-group">
+        <label>Site Name *</label>
+        <input type="text" name="site_name" value="{{ row.site_name if row else '' }}" required class="form-input" placeholder="SC DRT, DAL DRT, Server Room..."/>
+      </div>
+
+       <div class="form-group">
+        <label>Address</label>
+        <input type="text" name="address" value="{{ row.address if row else '' }}" class="form-input" placeholder="3105 Alfred Street.."/>
+      </div>
+
+      <div class="form-group">
+       <label>Contact Name</label>
+        <input type="text" name="contact_name" value="{{ row.contact_name if row else '' }}" class="form-input" placeholder="Name.."/>
+      </div>
+
+      <div class="form-group">
+        <label>Contact Email ID</label>
+        <input type="text" name="contact_email" value="{{ row.contact_email if row else '' }}" class="form-input" placeholder="Email Address..."/>
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <input type="text" name="notes" value="{{ row.notes if row else '' }}" class="form-input" placeholder="Notes.."/>
+      </div>
+
+      </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">{{ action }} Site Info</button>
+      <a href="{{ url_for('site_list') }}" class="btn-cancel">Cancel</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
