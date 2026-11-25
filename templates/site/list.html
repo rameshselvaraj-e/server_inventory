@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Site Info{% endblock %}
+{% block page_title %}Site Info{% endblock %}
+
+{% block topbar_action %}
+  <a href="{{ url_for('site_add') }}" class="btn-add">+ Add Sites Info</a>
+  <!---  <a href="{{ url_for('site_export') }}" class="btn-add"> Export CSV</a> --->
+{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <form method="get" class="filter-form">
+    <input type="text" name="search" value="{{ search }}" placeholder="Search entity name, site_name..." class="filter-input"/>
+    <select name="status" class="filter-select">
+      <option value="">All Status</option>
+    </select>
+    <button type="submit" class="btn-filter">Filter</button>
+    <a href="{{ url_for('site_list') }}" class="btn-reset">Reset</a>
+  </form>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Entity</th><th>Site_Name</th><th>Address</th><th>Contact_Name</th>
+        <th>Contact_Email</th><th>Notes</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td><strong>{{ r.entity }}</strong></td>
+        <td>{{ r.site_name or '_' }}</td>
+        <td>{{ r.address or '_' }}</td>
+        <td>{{ r.contact_name or '—' }}</td>
+        <td>{{ r.contact_email or '—' }}</td>
+        <td>{{ r.notes or '—' }}</td>
+        <td class="actions">
+          <a href="{{ url_for('site_edit', id=r.id) }}" class="action-edit">Edit</a>
+          <form method="post" action="{{ url_for('site_delete', id=r.id) }}" style="display:inline" onsubmit="return confirmDelete()">
+            <button type="submit" class="action-delete">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="10" class="no-data">No records found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
